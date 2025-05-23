@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/splashScreen">
+
+    <fragment
+        android:id="@+id/signUpCustomer"
+        android:name="com.rooshan.AsanKhredari.Fragments.SignUpCustomer"
+        android:label="fragment_sign_up_customer"
+        tools:layout="@layout/fragment_sign_up_customer" >
+        <action
+            android:id="@+id/action_signUpCustomer_to_logIn"
+            app:destination="@id/logIn" />
+    </fragment>
+    <fragment
+        android:id="@+id/logIn"
+        android:name="com.rooshan.AsanKhredari.Fragments.LogIn"
+        android:label="fragment_log_in"
+        tools:layout="@layout/fragment_log_in" >
+        <action
+            android:id="@+id/action_logIn_to_signUpCustomer"
+            app:destination="@id/signUpCustomer" />
+        <action
+            android:id="@+id/action_logIn_to_signUpRetailer"
+            app:destination="@id/signUpRetailer" />
+        <action
+            android:id="@+id/action_logIn_to_retailerHome"
+            app:destination="@id/retailerHome" />
+        <action
+            android:id="@+id/action_logIn_to_customerHome"
+            app:destination="@id/customerHome" />
+    </fragment>
+    <fragment
+        android:id="@+id/signUpRetailer"
+        android:name="com.rooshan.AsanKhredari.Fragments.SignUpRetailer"
+        android:label="fragment_sign_up_retailer"
+        tools:layout="@layout/fragment_sign_up_retailer" >
+        <action
+            android:id="@+id/action_signUpRetailer_to_logIn"
+            app:destination="@id/logIn" />
+    </fragment>
+    <fragment
+        android:id="@+id/splashScreen"
+        android:name="com.rooshan.AsanKhredari.Fragments.SplashScreen"
+        android:label="fragment_splash_screen"
+        tools:layout="@layout/fragment_splash_screen" >
+        <action
+            android:id="@+id/action_splashScreen_to_logIn"
+            app:destination="@id/logIn" />
+        <action
+            android:id="@+id/action_splashScreen_to_retailerHome"
+            app:destination="@id/retailerHome" />
+        <action
+            android:id="@+id/action_splashScreen_to_customerHome"
+            app:destination="@id/customerHome" />
+    </fragment>
+    <fragment
+        android:id="@+id/customerHome"
+        android:name="com.rooshan.AsanKhredari.Fragments.CustomerHome"
+        android:label="fragment_customer_home"
+        tools:layout="@layout/fragment_customer_home" >
+        <action
+            android:id="@+id/action_customerHome_to_customerShopItems"
+            app:destination="@id/customerShopItems" />
+    </fragment>
+    <fragment
+        android:id="@+id/retailerHome"
+        android:name="com.rooshan.AsanKhredari.Fragments.RetailerHome"
+        android:label="fragment_retailer_home"
+        tools:layout="@layout/fragment_retailer_home" >
+        <action
+            android:id="@+id/action_retailerHome_to_logIn"
+            app:destination="@id/logIn" />
+        <action
+            android:id="@+id/action_retailerHome_to_retailerTrackRecord"
+            app:destination="@id/retailerTrackRecord" />
+        <action
+            android:id="@+id/action_retailerHome_to_retailerAddItem"
+            app:destination="@id/retailerAddItem" />
+    </fragment>
+    <fragment
+        android:id="@+id/retailerAddItem"
+        android:name="com.rooshan.AsanKhredari.Fragments.RetailerAddItem"
+        android:label="fragment_retailer_add_item"
+        tools:layout="@layout/fragment_retailer_add_item" >
+        <action
+            android:id="@+id/action_retailerAddItem_to_retailerHome"
+            app:destination="@id/retailerHome" />
+    </fragment>
+    <fragment
+        android:id="@+id/retailerTrackRecord"
+        android:name="com.rooshan.AsanKhredari.Fragments.RetailerTrackRecord"
+        android:label="fragment_retailer_track_record"
+        tools:layout="@layout/fragment_retailer_track_record" />
+    <fragment
+        android:id="@+id/customerShopItems"
+        android:name="com.rooshan.AsanKhredari.Fragments.CustomerShopItems"
+        android:label="fragment_customer_shop_items"
+        tools:layout="@layout/fragment_customer_shop_items" />
+</navigation>

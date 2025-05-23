@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "399851927667",
+    "project_id": "asan-khredari",
+    "storage_bucket": "asan-khredari.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:399851927667:android:f73f5f6f01a2833aa85206",
+        "android_client_info": {
+          "package_name": "com.rooshan.AsanKhredari"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAFfQX1WU1hwL2jtSrZWYaBMkeouadCwSk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
