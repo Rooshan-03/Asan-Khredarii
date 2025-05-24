@@ -61,7 +61,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Shop Name"
-                android:textColor="@color/green"
+                android:textColor="@color/primaryDark"
                 android:textSize="20sp"
                 android:textStyle="bold" />
 
@@ -71,6 +71,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/shopType"
+                android:textColor="@color/green"
                 android:layout_marginTop="8dp"
                 android:text="123 Main Street, City"
                 android:textSize="14sp" />

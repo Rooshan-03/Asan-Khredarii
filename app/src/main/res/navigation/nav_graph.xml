@@ -64,6 +64,12 @@
         <action
             android:id="@+id/action_customerHome_to_customerShopItems"
             app:destination="@id/customerShopItems" />
+        <action
+            android:id="@+id/action_customerHome_to_customersPendingOrders"
+            app:destination="@id/customersPendingOrders" />
+        <action
+            android:id="@+id/action_customerHome_to_logIn"
+            app:destination="@id/logIn" />
     </fragment>
     <fragment
         android:id="@+id/retailerHome"
@@ -99,4 +105,9 @@
         android:name="com.rooshan.AsanKhredari.Fragments.CustomerShopItems"
         android:label="fragment_customer_shop_items"
         tools:layout="@layout/fragment_customer_shop_items" />
+    <fragment
+        android:id="@+id/customersPendingOrders"
+        android:name="com.rooshan.AsanKhredari.Fragments.CustomersPendingOrders"
+        android:label="fragment_customers_pending_orders"
+        tools:layout="@layout/fragment_customers_pending_orders" />
 </navigation>

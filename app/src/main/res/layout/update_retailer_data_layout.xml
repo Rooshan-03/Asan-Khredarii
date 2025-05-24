@@ -10,21 +10,27 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center_horizontal">
-
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Update Item"
+            android:textSize="@dimen/_30sdp"
+            android:layout_margin="@dimen/_18sdp"
+            android:textColor="@color/primaryDark"
+            android:textStyle="bold"
+            />
+        <androidx.cardview.widget.CardView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="@dimen/_10sdp"
+            >
         <ImageView
             android:id="@+id/itemImage"
             android:layout_width="150dp"
             android:layout_height="150dp"
             android:scaleType="centerCrop"
-            android:src="@drawable/outline_photo_camera_24" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnChangeImage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Change Picture"
-            android:textColor="@color/black"
-            style="@style/Widget.Material3.Button.TextButton" />
+            android:src="@drawable/app_logo" />
+        </androidx.cardview.widget.CardView>
 
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
@@ -131,7 +137,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Update"
-                android:backgroundTint="@color/black"
+                android:backgroundTint="@color/primaryDark"
                 android:layout_marginStart="8dp" />
         </LinearLayout>
     </LinearLayout>
