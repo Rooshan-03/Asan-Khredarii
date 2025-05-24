@@ -1,5 +1,6 @@
 package com.rooshan.AsanKhredari.Fragments
 
+import android.annotation.SuppressLint
 import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
 import android.os.Bundle
@@ -11,94 +12,96 @@ import android.view.ViewGroup
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.database.FirebaseDatabase // Import for Realtime Database
 import com.rooshan.AsanKhredari.R
 import com.rooshan.AsanKhredari.databinding.FragmentSplashScreenBinding
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
+@SuppressLint("CustomSplashScreen")
 class SplashScreen : Fragment() {
     private var _binding: FragmentSplashScreenBinding? = null
     private val binding get() = _binding!!
     private lateinit var auth: FirebaseAuth
-    private lateinit var db: FirebaseFirestore
+    private lateinit var db: FirebaseDatabase // Change to FirebaseDatabase
     private lateinit var sharedPreferences: SharedPreferences
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentSplashScreenBinding.inflate(inflater, container, false)
         Log.d("SplashScreen", "View created, layout inflated: ${binding.root.id}")
+
+        // Initialize Firebase Auth
         auth = FirebaseAuth.getInstance()
-        db = FirebaseFirestore.getInstance()
+        // Initialize Firebase Realtime Database
+        db = FirebaseDatabase.getInstance()
+        // Initialize SharedPreferences
         sharedPreferences = requireActivity().getSharedPreferences("Details", MODE_PRIVATE)
+
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 Log.d("SplashScreen", "Starting splash delay")
-                delay(2000)
+                delay(2000) // Delay for 2 seconds
+
                 val userId = auth.currentUser?.uid
-                val document = db.collection("Roles").document(userId.toString()).get().await()
-                val role = document.getString("Role")
+
+                // Check if a user is logged in
+                if (userId == null) {
+                    // No user logged in, navigate to LogIn screen
+                    findNavController().navigate(R.id.action_splashScreen_to_logIn)
+                    return@launch // Exit the coroutine
+                }
+
+                // Reference to the user's role in Realtime Database
+                // The path would be "Roles/{userId}/Role"
+                val roleRef = db.getReference("Roles").child(userId).child("Role")
+
+                // Fetch the role data from Realtime Database
+                val dataSnapshot = roleRef.get().await()
+                val role = dataSnapshot.getValue(String::class.java) // Get the string value
+
+                // Check the role and navigate accordingly
                 if (role.isNullOrEmpty()) {
+                    // Role is not found or empty, navigate to LogIn
+                    Log.d("SplashScreen", "Role not found or empty for user $userId, navigating to LogIn")
                     findNavController().navigate(R.id.action_splashScreen_to_logIn)
                 } else {
+                    // Role found, save it to SharedPreferences
                     sharedPreferences.edit().putString("Role", role).apply()
+                    Log.d("SplashScreen", "Role '$role' found for user $userId, navigating to respective home screen")
+
+                    // Navigate based on the role
                     if (role == "Retailer") {
                         findNavController().navigate(R.id.action_splashScreen_to_retailerHome)
                     } else if (role == "Customers") {
                         findNavController().navigate(R.id.action_splashScreen_to_customerHome)
+                    } else {
+                        // Handle unexpected roles or default to login
+                        Log.w("SplashScreen", "Unexpected role '$role' for user $userId, navigating to LogIn")
+                        findNavController().navigate(R.id.action_splashScreen_to_logIn)
                     }
                 }
             } catch (e: Exception) {
+                // Log any errors that occur during the process
                 Log.e("SplashScreen", "Error in splash screen: ${e.message}", e)
+                // In case of an error (e.g., network issue, database read failure),
+                // it's often best to navigate to the login screen or a generic error screen.
+                findNavController().navigate(R.id.action_splashScreen_to_logIn)
             }
         }
-//        viewLifecycleOwner.lifecycleScope.launch {
-//            try {
-//                Log.d("SplashScreen", "Starting splash delay")
-//                delay(5000) // Extended to 5 seconds for testing
-//                Log.d("SplashScreen", "Delay complete")
-//
-//                val navController = findNavController()
-//                Log.d("SplashScreen", "Current destination: ${navController.currentDestination?.id}, Expected: ${R.id.splashScreen}")
-//
-//                if (navController.currentDestination?.id == R.id.splashScreen) {
-//                    val user = auth.currentUser
-//                    Log.d("SplashScreen", "User: ${user?.uid}, EmailVerified: ${user?.isEmailVerified}")
-//
-//                    if (user != null && user.isEmailVerified) {
-//                        if (role.isNullOrEmpty()) {
-//                            Log.d("SplashScreen", "No role found, navigating to login")
-//                            navController.navigate(R.id.action_splashScreen_to_logIn)
-//                        } else {
-//                            Log.d("SplashScreen", "Navigating based on role: $role")
-//                            if (role == "Retailer") {
-//                                navController.navigate(R.id.action_splashScreen_to_retailerHome)
-//                            } else {
-//                                navController.navigate(R.id.action_splashScreen_to_customerHome)
-//                            }
-//                        }
-//                    } else {
-//                        Log.d("SplashScreen", "No user or email not verified, navigating to login")
-//                        navController.navigate(R.id.action_splashScreen_to_logIn)
-//                    }
-//                } else {
-//                    Log.d("SplashScreen", "Unexpected destination, skipping navigation")
-//                }
-//            } catch (e: Exception) {
-//                Log.e("SplashScreen", "Error in splash screen: ${e.message}", e)
-//            }
-//        }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null
+        _binding = null // Clear the binding reference to avoid memory leaks
     }
 }

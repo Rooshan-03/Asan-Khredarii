@@ -2,6 +2,7 @@ package com.rooshan.AsanKhredari.Adapter
 
 import android.content.Context
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
@@ -11,21 +12,17 @@ import com.rooshan.AsanKhredari.DataClass.CustomerHomeDataClass
 import com.rooshan.AsanKhredari.R
 
 class CustomerHomeAdapter(
-    private val context: Context, private var dataList: MutableList<CustomerHomeDataClass>
+    private val context: Context,
+    private var dataList: MutableList<CustomerHomeDataClass>
 ) : RecyclerView.Adapter<CustomerHomeAdapter.ViewHolderClass>() {
-    override fun onCreateViewHolder(
-        parent: ViewGroup,
-        viewType: Int
-    ): ViewHolderClass {
-        val view = View.inflate(context, R.layout.customer_shop_item_layout, null)
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolderClass {
+        val view = LayoutInflater.from(context).inflate(R.layout.customer_shop_item_layout, parent, false)
         return ViewHolderClass(view)
     }
 
-    override fun onBindViewHolder(
-        holder: ViewHolderClass,
-        position: Int
-    ) {
-        var currentItem = dataList[position]
+    override fun onBindViewHolder(holder: ViewHolderClass, position: Int) {
+        val currentItem = dataList[position]
         holder.shopName.text = currentItem.ShopName
         holder.shopType.text = currentItem.ShopType
         holder.shopAddress.text = currentItem.ShopAddress
@@ -40,14 +37,17 @@ class CustomerHomeAdapter(
         }
     }
 
-    override fun getItemCount(): Int {
-        return dataList.size
+    override fun getItemCount(): Int = dataList.size
+
+    fun updateList(newList: MutableList<CustomerHomeDataClass>) {
+        dataList = newList
+        notifyDataSetChanged()
     }
 
     class ViewHolderClass(view: View) : RecyclerView.ViewHolder(view) {
-        val shopType = view.findViewById<TextView>(R.id.shopType)
-        val shopName = view.findViewById<TextView>(R.id.shopName)
-        val shopAddress = view.findViewById<TextView>(R.id.location)
-        val item = view.findViewById<View>(R.id.item)
+        val shopType: TextView = view.findViewById(R.id.shopType)
+        val shopName: TextView = view.findViewById(R.id.shopName)
+        val shopAddress: TextView = view.findViewById(R.id.location)
+        val item: View = view.findViewById(R.id.item)
     }
 }

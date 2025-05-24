@@ -4,25 +4,22 @@ import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.Dialog
 import android.content.SharedPreferences
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Adapter
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.edit
+import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.database.*
 import com.rooshan.AsanKhredari.Adapter.RetailerHomeAdapter
 import com.rooshan.AsanKhredari.DataClass.RetailerItemDataClass
 import com.rooshan.AsanKhredari.MainActivity
@@ -34,22 +31,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 
-
 class RetailerHome : Fragment() {
     private var _binding: FragmentRetailerHomeBinding? = null
     private val binding get() = _binding!!
     private lateinit var auth: FirebaseAuth
     private lateinit var adapter: RetailerHomeAdapter
     private lateinit var dataList: MutableList<RetailerItemDataClass>
-    private lateinit var db: FirebaseFirestore
+    private lateinit var db: FirebaseDatabase
     private lateinit var sharedPreferences: SharedPreferences
     private val progressDialog by lazy { createProgressDialog() }
-
-    private val pickImageLauncher =
-        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-            currentImageCallback?.invoke(uri)
-        }
-    private var currentImageCallback: ((Uri?) -> Unit)? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,8 +54,7 @@ class RetailerHome : Fragment() {
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentRetailerHomeBinding.inflate(inflater, container, false)
         return binding.root
@@ -84,12 +73,12 @@ class RetailerHome : Fragment() {
 
             sharedPreferences = requireContext().getSharedPreferences("Details", 0)
             val ShopName = sharedPreferences.getString("ShopName", null)
-            val UserName = sharedPreferences.getString("UserName", null)
-            Log.d("Home", "ShopName: $ShopName, UserName: $UserName")
-            if (ShopName == null || UserName == null) {
+            val userName = sharedPreferences.getString("UserName", null)
+            Log.d("Home", "ShopName: $shopName, UserName: $userName")
+            if (ShopName == null || userName == null) {
                 Toast.makeText(context, "Null", Toast.LENGTH_SHORT).show()
             }
-            name.text = UserName
+            name.text = userName
             shopName.text = ShopName
             (activity as? MainActivity)?.setSupportActionBar(toolbar)
 
@@ -97,13 +86,7 @@ class RetailerHome : Fragment() {
             adapter = RetailerHomeAdapter(requireContext(), dataList)
             recyclerView.layoutManager = LinearLayoutManager(requireContext())
             recyclerView.adapter = adapter
-            db = FirebaseFirestore.getInstance()
-            adapter.setImagePickerCallback(object : RetailerHomeAdapter.ImagePickerCallback {
-                override fun pickImageForUpdate(onImagePicked: (Uri?) -> Unit) {
-                    currentImageCallback = onImagePicked
-                    pickImageLauncher.launch("image/*")
-                }
-            })
+            db = FirebaseDatabase.getInstance()
             if (auth.currentUser != null) {
                 progressDialog.show()
                 loadData()
@@ -117,9 +100,12 @@ class RetailerHome : Fragment() {
         binding.editName.setOnClickListener {
             val builder = AlertDialog.Builder(context)
             val view = LayoutInflater.from(context).inflate(R.layout.update_name, null)
-            val newName = view.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.editName)
-            val cancel = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.cancel)
-            val editNameBtn = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.editNameBtn)
+            val newName =
+                view.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.editName)
+            val cancel =
+                view.findViewById<com.google.android.material.button.MaterialButton>(R.id.cancel)
+            val editNameBtn =
+                view.findViewById<com.google.android.material.button.MaterialButton>(R.id.editNameBtn)
             builder.setView(view)
             builder.setTitle("Edit Name")
             builder.setMessage("Enter new name")
@@ -129,8 +115,9 @@ class RetailerHome : Fragment() {
             editNameBtn.setOnClickListener {
                 val nameInput = newName.text.toString().trim()
                 if (nameInput.isNotEmpty()) {
-                    db.collection("Retailer").document(auth.currentUser?.uid ?: "")
-                        .update("UserName", nameInput)
+                    db.reference.child("Retailers").child(auth.currentUser?.uid ?: "")
+                        .child("UserName")
+                        .setValue(nameInput)
                         .addOnSuccessListener {
                             sharedPreferences.edit {
                                 putString("UserName", nameInput)
@@ -140,7 +127,9 @@ class RetailerHome : Fragment() {
                             dialog.dismiss()
                         }
                         .addOnFailureListener { e ->
-                            Toast.makeText(context, "Error updating name: ${e.message}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context, "Error updating name: ${e.message}", Toast.LENGTH_SHORT
+                            ).show()
                         }
                 } else {
                     Toast.makeText(context, "Please enter a valid name", Toast.LENGTH_SHORT).show()
@@ -153,22 +142,27 @@ class RetailerHome : Fragment() {
     }
 
     private fun ChangeYourShopName() {
-        binding.editName.setOnClickListener {
+        binding.editShopName.setOnClickListener { // Fixed: Use editShopName instead of editName
             val builder = AlertDialog.Builder(context)
             val view = LayoutInflater.from(context).inflate(R.layout.update_name, null)
-            val newShopName = view.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.editName)
-            val cancel = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.cancel)
-            val editNameBtn = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.editNameBtn)
+            val newShopName =
+                view.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.editName)
+            val cancel =
+                view.findViewById<com.google.android.material.button.MaterialButton>(R.id.cancel)
+            val editNameBtn =
+                view.findViewById<com.google.android.material.button.MaterialButton>(R.id.editNameBtn)
             builder.setView(view)
             builder.setTitle("Edit Shop Name")
             builder.setMessage("Enter new shop name")
             val dialog = builder.create()
             dialog.show()
+
             editNameBtn.setOnClickListener {
                 val shopNameInput = newShopName.text.toString().trim()
                 if (shopNameInput.isNotEmpty()) {
-                    db.collection("Retailer").document(auth.currentUser?.uid ?: "")
-                        .update("UserName", shopNameInput)
+                    db.reference.child("Retailers").child(auth.currentUser?.uid ?: "")
+                        .child("ShopName")
+                        .setValue(shopNameInput)
                         .addOnSuccessListener {
                             sharedPreferences.edit {
                                 putString("ShopName", shopNameInput)
@@ -178,7 +172,9 @@ class RetailerHome : Fragment() {
                             dialog.dismiss()
                         }
                         .addOnFailureListener { e ->
-                            Toast.makeText(context, "Error updating shop name: ${e.message}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context, "Error updating shop name: ${e.message}", Toast.LENGTH_SHORT
+                            ).show()
                         }
                 } else {
                     Toast.makeText(context, "Please enter a valid shop name", Toast.LENGTH_SHORT).show()
@@ -196,11 +192,9 @@ class RetailerHome : Fragment() {
             R.id.signOut -> {
                 implementSignOut()
             }
-
             R.id.deleteAccount -> {
                 implementDeleteAccount()
             }
-
             R.id.trackRecord -> {
                 Toast.makeText(
                     context,
@@ -209,7 +203,6 @@ class RetailerHome : Fragment() {
                 ).show()
                 findNavController().navigate(R.id.action_retailerHome_to_retailerTrackRecord)
             }
-
             R.id.addItemBtn -> {
                 if (auth.currentUser == null) {
                     findNavController().navigate(R.id.action_retailerHome_to_logIn)
@@ -234,16 +227,13 @@ class RetailerHome : Fragment() {
                     auth.signOut()
                     sharedPreferences.edit { clear() }
                     progressDialog.dismiss()
-                    Toast.makeText(requireContext(), "Signed out successfully", Toast.LENGTH_SHORT)
-                        .show()
+                    Toast.makeText(requireContext(), "Signed out successfully", Toast.LENGTH_SHORT).show()
                     findNavController().navigate(R.id.action_retailerHome_to_logIn)
                     dialog.dismiss()
                 } catch (e: Exception) {
                     progressDialog.dismiss()
                     Toast.makeText(
-                        requireContext(),
-                        "Error signing out: ${e.message}",
-                        Toast.LENGTH_LONG
+                        requireContext(), "Error signing out: ${e.message}", Toast.LENGTH_LONG
                     ).show()
                     dialog.dismiss()
                 }
@@ -295,9 +285,8 @@ class RetailerHome : Fragment() {
             }
             if (emailInput != currentUser.email) {
                 Toast.makeText(
-                    context,
-                    "Email does not match the signed-in account",
-                    Toast.LENGTH_SHORT
+                    context, "Email does not match the signed-in account", Toast.LENGTH_SHORT
+                    ,
                 ).show()
                 return@setOnClickListener
             }
@@ -308,8 +297,8 @@ class RetailerHome : Fragment() {
                     try {
                         val credential = EmailAuthProvider.getCredential(emailInput, password)
                         currentUser.reauthenticate(credential).await()
-                        db.collection("Retailer").document(auth.uid.toString())
-                            .delete()
+                        db.reference.child("Retailers").child(auth.uid.toString())
+                            .removeValue()
                             .await()
                         currentUser.delete().await()
                         sharedPreferences.edit { clear() }
@@ -317,9 +306,7 @@ class RetailerHome : Fragment() {
                             if (isAdded) {
                                 progressDialog.dismiss()
                                 Toast.makeText(
-                                    context,
-                                    "Account deleted successfully",
-                                    Toast.LENGTH_SHORT
+                                    context, "Account deleted successfully", Toast.LENGTH_SHORT
                                 ).show()
                                 dialog.dismiss()
                                 findNavController().navigate(R.id.action_retailerHome_to_logIn)
@@ -346,59 +333,108 @@ class RetailerHome : Fragment() {
     private fun loadData() {
         if (isAdded) {
             progressDialog.show()
-            db.collection("Retailer").document(auth.uid.toString()).collection("items")
-                .addSnapshotListener { snapshots, e ->
-                    if (isAdded) {
-                        progressDialog.dismiss()
-                        if (e != null) {
-                            Log.e("Home", "Error loading items: ${e.message}", e)
-                            Toast.makeText(
-                                context,
-                                "Error loading items: ${e.message}",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            return@addSnapshotListener
-                        }
-                        dataList.clear()
-                        snapshots?.documents?.forEach { document ->
-                            try {
-                                val quantityValue = document.get("quantity")
-                                val quantity = when (quantityValue) {
-                                    is Long -> quantityValue.toString()
-                                    is String -> quantityValue
-                                    else -> null
+            db.reference.child("Retailers").child(auth.uid.toString()).child("items")
+                .addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        if (isAdded) {
+                            progressDialog.dismiss()
+                            Log.d("Home", "Snapshot received, children count: ${snapshot.childrenCount}")
+                            dataList.clear()
+                            for (document in snapshot.children) {
+                                try {
+                                    // Log raw document data
+                                    Log.d("Home", "Document: ${document.key}, Data: ${document.value}")
+
+                                    // Handle quantity
+                                    val quantityValue = document.child("quantity").value
+                                    val quantity = when (quantityValue) {
+                                        is Long -> quantityValue.toString()
+                                        is String -> quantityValue
+                                        is Double -> quantityValue.toInt().toString()
+                                        is Int -> quantityValue.toString()
+                                        is Number -> quantityValue.toInt().toString()
+                                        else -> null
+                                    }
+
+                                    // Handle price
+                                    val priceValue = document.child("price").value
+                                    val price = when (priceValue) {
+                                        is Double -> priceValue
+                                        is Long -> priceValue.toDouble()
+                                        is Int -> priceValue.toDouble()
+                                        is Number -> priceValue.toDouble()
+                                        else -> null
+                                    }
+
+                                    // Handle deliveryPrice
+                                    val deliveryPriceValue = document.child("deliveryPrice").value
+                                    val deliveryPrice = when (deliveryPriceValue) {
+                                        is Double -> deliveryPriceValue
+                                        is Long -> deliveryPriceValue.toDouble()
+                                        is Int -> deliveryPriceValue.toDouble()
+                                        is Number -> deliveryPriceValue.toDouble()
+                                        else -> null
+                                    }
+
+                                    // Handle totalPrice
+                                    val totalPriceValue = document.child("totalPrice").value
+                                    val totalPrice = when (totalPriceValue) {
+                                        is Double -> totalPriceValue
+                                        is Long -> totalPriceValue.toDouble()
+                                        is Int -> totalPriceValue.toDouble()
+                                        is Number -> totalPriceValue.toDouble()
+                                        else -> null
+                                    }
+
+                                    val data = RetailerItemDataClass(
+                                        id = document.key ?: "",
+                                        itemName = document.child("itemName").getValue(String::class.java) ?: "",
+                                        price = price,
+                                        deliveryPrice = deliveryPrice,
+                                        quantity = quantity,
+                                        totalPrice = totalPrice,
+                                        unit = document.child("unit").getValue(String::class.java) ?: ""
+                                    )
+                                    if (data.itemName.isNullOrEmpty() || data.price == null || data.deliveryPrice == null || data.quantity == null) {
+                                        Log.w(
+                                            "Home",
+                                            "Skipping invalid item: ${document.key}, " +
+                                                    "itemName=${data.itemName}, price=${data.price}, " +
+                                                    "deliveryPrice=${data.deliveryPrice}, quantity=${data.quantity}, " +
+                                                    "totalPrice=${data.totalPrice}, unit=${data.unit}"
+                                        )
+                                    } else {
+                                        dataList.add(data)
+                                        Log.d("Home", "Added item: ${data.itemName}")
+                                    }
+                                } catch (ex: Exception) {
+                                    Log.e(
+                                        "Home",
+                                        "Error deserializing item ${document.key}: ${ex.message}",
+                                        ex
+                                    )
+                                    Toast.makeText(
+                                        context,
+                                        "Error deserializing item: ${document.key}",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 }
-                                val data = RetailerItemDataClass(
-                                    id = document.id,
-                                    itemName = document.getString("itemName") ?: "",
-                                    price = document.getDouble("price"),
-                                    deliveryPrice = document.getDouble("deliveryPrice"),
-                                    quantity = quantity,
-                                    totalPrice = document.getDouble("totalPrice"),
-                                    unit = document.getString("unit") ?: "",
-                                    imageBase64 = document.getString("imageBase64")
-                                )
-                                if (data.itemName.isNullOrEmpty() || data.price == null || data.deliveryPrice == null || data.quantity == null) {
-                                    Log.w("Home", "Skipping invalid item: ${document.id}")
-                                } else {
-                                    dataList.add(data)
-                                }
-                            } catch (ex: Exception) {
-                                Log.e(
-                                    "Home",
-                                    "Error deserializing item ${document.id}: ${ex.message}",
-                                    ex
-                                )
-                                Toast.makeText(
-                                    context,
-                                    "Error deserializing item: ${document.id}",
-                                    Toast.LENGTH_SHORT
-                                ).show()
                             }
+                            Log.d("Home", "Data list size: ${dataList.size}")
+                            adapter.notifyDataSetChanged()
                         }
-                        adapter.notifyDataSetChanged()
                     }
-                }
+
+                    override fun onCancelled(error: DatabaseError) {
+                        if (isAdded) {
+                            progressDialog.dismiss()
+                            Log.e("Home", "Error loading items: ${error.message}", error.toException())
+                            Toast.makeText(
+                                context, "Error loading items: ${error.message}", Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                })
         }
     }
 

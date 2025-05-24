@@ -4,7 +4,6 @@ import android.app.Dialog
 import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,7 +14,7 @@ import androidx.navigation.fragment.findNavController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
-import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.database.FirebaseDatabase
 import com.rooshan.AsanKhredari.R
 import com.rooshan.AsanKhredari.databinding.FragmentSignUpRetailerBinding
 import kotlinx.coroutines.launch
@@ -24,18 +23,18 @@ import kotlinx.coroutines.tasks.await
 class SignUpRetailer : Fragment() {
     private var _binding: FragmentSignUpRetailerBinding? = null
     private val binding get() = _binding!!
-    private lateinit var db: FirebaseFirestore
     private lateinit var auth: FirebaseAuth
+    private lateinit var database: FirebaseDatabase
     private lateinit var sharedPreferences: SharedPreferences
     private val progressDialog by lazy { createProgressDialog() }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentSignUpRetailerBinding.inflate(inflater, container, false)
-        db = FirebaseFirestore.getInstance()
         auth = FirebaseAuth.getInstance()
+        database = FirebaseDatabase.getInstance()
         sharedPreferences = requireActivity().getSharedPreferences("Details", MODE_PRIVATE)
         return binding.root
     }
@@ -72,7 +71,8 @@ class SignUpRetailer : Fragment() {
                 val user = result.user ?: throw IllegalStateException("User creation failed")
                 user.sendEmailVerification()?.await()
 
-                val userData = hashMapOf(
+                val uid = user.uid
+                val userData = mapOf(
                     "UserName" to binding.signUpUserName.text.toString(),
                     "ShopName" to binding.signUpShopName.text.toString(),
                     "Email" to email,
@@ -80,21 +80,13 @@ class SignUpRetailer : Fragment() {
                     "Location" to binding.signUpShopLocation.text.toString(),
                     "ShopType" to binding.signUpShopType.text.toString()
                 )
-                Log.d("SignUpRetailer", "Writing to Retailer collection for UID: ${user.uid}")
-                db.collection("Retailer").document(user.uid).set(userData).await()
 
-                Log.d("SignUpRetailer", "Writing to Roles collection for UID: ${user.uid}")
-                db.collection("Roles").document(user.uid).set(
-                    hashMapOf(
-                        "Role" to "Retailer",
-                        "UserName" to binding.signUpUserName.text.toString(),
-                        "ShopName" to binding.signUpShopName.text.toString(),
-                        "Email" to email,
-                        "Phone" to binding.signUpPhone.text.toString(),
-                        "Location" to binding.signUpShopLocation.text.toString(),
-                        "ShopType" to binding.signUpShopType.text.toString()
-                    )
-                ).await()
+                // Save to "Retailer" node
+                database.reference.child("Retailers").child(uid).setValue(userData).await()
+
+                // Save role data
+                val roleData = userData + mapOf("Role" to "Retailer")
+                database.reference.child("Roles").child(uid).setValue(roleData).await()
 
                 saveDetails()
                 clearAllFields()
@@ -105,7 +97,6 @@ class SignUpRetailer : Fragment() {
                 ).show()
                 findNavController().navigate(R.id.action_signUpRetailer_to_logIn)
             } catch (e: Exception) {
-                Log.e("SignUpRetailer", "Error during registration", e)
                 val message = when (e) {
                     is FirebaseAuthWeakPasswordException -> "Password is too weak"
                     is FirebaseAuthUserCollisionException -> "Email already in use"
@@ -143,50 +134,52 @@ class SignUpRetailer : Fragment() {
     }
 
     private fun validateInputs(): Boolean {
-        if (binding.signUpUserName.text.toString().isEmpty()) {
-            progressDialog.dismiss()
-            binding.signUpUserName.error = "Enter User Name"
-            return false
-        }
-        if (binding.signUpShopLocation.text.toString().isEmpty()) {
-            progressDialog.dismiss()
-            binding.signUpShopLocation.error = "Enter Shop Location"
-            return false
-        }
-        if (binding.signUpShopType.text.toString().isEmpty()) {
-            progressDialog.dismiss()
-            binding.signUpShopType.error = "Enter Shop Type"
-            return false
-        }
-        if (binding.signUpShopName.text.toString().isEmpty()) {
-            progressDialog.dismiss()
-            binding.signUpShopName.error = "Enter Shop Name"
-            return false
-        }
-        if (binding.signUpEmail.text.toString().isEmpty()) {
-            progressDialog.dismiss()
-            binding.signUpEmail.error = "Enter Email"
-            return false
-        }
-        if (binding.signUpPhone.text.toString().isEmpty()) {
-            progressDialog.dismiss()
-            binding.signUpPhone.error = "Enter Phone"
-            return false
-        }
-        if (binding.signUpPassword.text.toString().isEmpty()) {
-            progressDialog.dismiss()
-            binding.signUpPassword.error = "Enter Password"
-            return false
-        }
-        if (binding.signUpConfirmPassword.text.toString().isEmpty()) {
-            progressDialog.dismiss()
-            binding.signUpConfirmPassword.error = "Enter Confirm Password"
-            return false
-        }
-        if (binding.signUpPassword.text.toString() != binding.signUpConfirmPassword.text.toString()) {
-            progressDialog.dismiss()
-            binding.signUpConfirmPassword.error = "Password not match"
-            return false
+        with(binding) {
+            if (signUpUserName.text.isNullOrEmpty()) {
+                progressDialog.dismiss()
+                signUpUserName.error = "Enter User Name"
+                return false
+            }
+            if (signUpShopLocation.text.isNullOrEmpty()) {
+                progressDialog.dismiss()
+                signUpShopLocation.error = "Enter Shop Location"
+                return false
+            }
+            if (signUpShopType.text.isNullOrEmpty()) {
+                progressDialog.dismiss()
+                signUpShopType.error = "Enter Shop Type"
+                return false
+            }
+            if (signUpShopName.text.isNullOrEmpty()) {
+                progressDialog.dismiss()
+                signUpShopName.error = "Enter Shop Name"
+                return false
+            }
+            if (signUpEmail.text.isNullOrEmpty()) {
+                progressDialog.dismiss()
+                signUpEmail.error = "Enter Email"
+                return false
+            }
+            if (signUpPhone.text.isNullOrEmpty()) {
+                progressDialog.dismiss()
+                signUpPhone.error = "Enter Phone"
+                return false
+            }
+            if (signUpPassword.text.isNullOrEmpty()) {
+                progressDialog.dismiss()
+                signUpPassword.error = "Enter Password"
+                return false
+            }
+            if (signUpConfirmPassword.text.isNullOrEmpty()) {
+                progressDialog.dismiss()
+                signUpConfirmPassword.error = "Enter Confirm Password"
+                return false
+            }
+            if (signUpPassword.text.toString() != signUpConfirmPassword.text.toString()) {
+                progressDialog.dismiss()
+                signUpConfirmPassword.error = "Passwords do not match"
+                return false
+            }
         }
         return true
     }

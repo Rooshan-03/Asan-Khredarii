@@ -6,40 +6,39 @@ import android.app.Dialog
 import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.Toast
+import androidx.core.content.edit
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.FirebaseDatabase
 import com.rooshan.AsanKhredari.R
 import com.rooshan.AsanKhredari.databinding.FragmentLogInBinding
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import androidx.core.content.edit
-import com.google.firebase.firestore.FirebaseFirestoreException
-
 
 class LogIn : Fragment() {
     private var _binding: FragmentLogInBinding? = null
     private val binding get() = _binding!!
-    private lateinit var db: FirebaseFirestore
     private lateinit var auth: FirebaseAuth
-    private val progressDialog by lazy { createProgressDialog() }
+    private lateinit var database: FirebaseDatabase
     private lateinit var sharedPreferences: SharedPreferences
+    private val progressDialog by lazy { createProgressDialog() }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentLogInBinding.inflate(inflater, container, false)
-        db = FirebaseFirestore.getInstance()
         auth = FirebaseAuth.getInstance()
+        database = FirebaseDatabase.getInstance()
         sharedPreferences = requireActivity().getSharedPreferences("Details", MODE_PRIVATE)
         return binding.root
     }
@@ -63,16 +62,15 @@ class LogIn : Fragment() {
         return true
     }
 
-
     @SuppressLint("MissingInflatedId")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        HandleRoleDialoug()
+        HandleRoleDialog()
         binding.apply {
             progressDialog.dismiss()
             forgotPassword.setOnClickListener {
                 progressDialog.show()
-                showForgetPasswordDialoug()
+                showForgetPasswordDialog()
             }
             logInBtnLogin.setOnClickListener {
                 progressDialog.show()
@@ -84,26 +82,34 @@ class LogIn : Fragment() {
                                 binding.logInEmail.text.toString(),
                                 binding.logInPassword.text.toString()
                             ).await()
-                            if (result.user == null) {
+
+                            val user = result.user
+                            if (user == null) {
                                 Toast.makeText(requireContext(), "Authentication failed", Toast.LENGTH_SHORT).show()
-                            } else if (result.user?.isEmailVerified == true) {
-                                val document = db.collection("Roles")
-                                    .document(auth.currentUser?.uid.toString()).get().await()
-                                if (document.exists()) {
-                                    val role = document.getString("Role")
-                                    when (role) {
-                                        "Customers" -> {
-                                            saveUserInfo(document, role)
-                                            findNavController().navigate(R.id.action_logIn_to_customerHome)
+                            } else if (user.isEmailVerified) {
+                                val snapshot = database.reference
+                                    .child("Roles")
+                                    .child(user.uid)
+                                    .get().await()
+
+                                if (snapshot.exists()) {
+                                    val role = snapshot.child("Role").value as? String
+                                    if (role != null) {
+                                        saveUserInfo(snapshot, role)
+                                        val action = when (role) {
+                                            "Customers" -> R.id.action_logIn_to_customerHome
+                                            "Retailer" -> R.id.action_logIn_to_retailerHome
+                                            else -> {
+                                                Toast.makeText(requireContext(), "Unknown role", Toast.LENGTH_SHORT).show()
+                                                null
+                                            }
                                         }
-                                        "Retailer" -> {
-                                            saveUserInfo(document, role)
-                                            findNavController().navigate(R.id.action_logIn_to_retailerHome)
-                                        }
-                                        else -> Toast.makeText(requireContext(), "Register Yourself!", Toast.LENGTH_SHORT).show()
+                                        action?.let { findNavController().navigate(it) }
+                                    } else {
+                                        Toast.makeText(requireContext(), "Role not found", Toast.LENGTH_SHORT).show()
                                     }
                                 } else {
-                                    Toast.makeText(requireContext(), "User role data not found", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(requireContext(), "User data not found", Toast.LENGTH_SHORT).show()
                                 }
                             } else {
                                 Toast.makeText(requireContext(), "Please verify your email", Toast.LENGTH_SHORT).show()
@@ -112,17 +118,7 @@ class LogIn : Fragment() {
                                 auth.signOut()
                             }
                         } catch (e: Exception) {
-                            progressDialog.dismiss()
-                            when (e) {
-                                is FirebaseFirestoreException -> {
-                                    if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
-                                        Toast.makeText(requireContext(), "Permission denied. Check Firestore rules.", Toast.LENGTH_SHORT).show()
-                                    } else {
-                                        Toast.makeText(requireContext(), "Firestore error: ${e.message}", Toast.LENGTH_SHORT).show()
-                                    }
-                                }
-                                else -> Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-                            }
+                            Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                             binding.logInEmail.error = e.message
                             binding.logInPassword.setText("")
                         } finally {
@@ -133,86 +129,79 @@ class LogIn : Fragment() {
                         progressDialog.dismiss()
                     }
                 }
-            }        }
-    }
-
-    private fun saveUserInfo(document: DocumentSnapshot, role: String) {
-        sharedPreferences.edit {
-            putString("Role", role)
-            putString("UserName", document.getString("UserName"))
-            putString("Email", document.getString("Email"))
-            putString("Phone", document.getString("Phone"))
-            if (role == "Retailer") {
-                putString("ShopName", document.getString("ShopName"))
-                putString("Location", document.getString("Location"))
-                putString("ShopType", document.getString("ShopType"))
             }
         }
     }
 
+    private fun saveUserInfo(snapshot: DataSnapshot, role: String) {
+        sharedPreferences.edit {
+            putString("Role", role)
+            putString("UserName", snapshot.child("UserName").value?.toString())
+            putString("Email", snapshot.child("Email").value?.toString())
+            putString("Phone", snapshot.child("Phone").value?.toString())
+            if (role == "Retailer") {
+                putString("ShopName", snapshot.child("ShopName").value?.toString())
+                putString("Location", snapshot.child("Location").value?.toString())
+                putString("ShopType", snapshot.child("ShopType").value?.toString())
+            }
+        }
+    }
 
-    private fun showForgetPasswordDialoug() {
-        val dialog = LayoutInflater.from(context).inflate(R.layout.forget_password_layout, null)
-        val dialogBuilder = androidx.appcompat.app.AlertDialog.Builder(requireContext())
-        dialogBuilder.setView(dialog)
-        val email = dialog.findViewById<EditText>(R.id.etDialogEmail)
-        val cancel = dialog.findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.btnCancel)
-        val confirm =
-            dialog.findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.btnConfirm)
+    private fun showForgetPasswordDialog() {
+        val dialogView = LayoutInflater.from(context).inflate(R.layout.forget_password_layout, null)
+        val dialogBuilder = AlertDialog.Builder(requireContext()).setView(dialogView)
+        val emailInput = dialogView.findViewById<EditText>(R.id.etDialogEmail)
+        val cancelBtn = dialogView.findViewById<MaterialButton>(R.id.btnCancel)
+        val confirmBtn = dialogView.findViewById<MaterialButton>(R.id.btnConfirm)
         val alertDialog = dialogBuilder.create()
+
         progressDialog.dismiss()
         alertDialog.setCancelable(false)
         alertDialog.show()
-        confirm.setOnClickListener {
+
+        confirmBtn.setOnClickListener {
             progressDialog.show()
-            if (email.text.toString().isEmpty()) {
+            val email = emailInput.text.toString()
+            if (email.isEmpty()) {
                 progressDialog.dismiss()
-                email.error = "Enter Email"
+                emailInput.error = "Enter Email"
             } else {
                 lifecycleScope.launch {
                     try {
-                        auth.sendPasswordResetEmail(email.text.toString()).await()
-                        progressDialog.dismiss()
-                        Toast.makeText(
-                            context,
-                            "Email sent. Click Link to proceed",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        auth.sendPasswordResetEmail(email).await()
+                        Toast.makeText(context, "Email sent. Click link to reset password", Toast.LENGTH_SHORT).show()
                         alertDialog.dismiss()
                     } catch (e: Exception) {
-                        progressDialog.dismiss()
                         Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                         alertDialog.dismiss()
+                    } finally {
+                        progressDialog.dismiss()
                     }
                 }
             }
         }
-        cancel.setOnClickListener {
+
+        cancelBtn.setOnClickListener {
             progressDialog.dismiss()
             alertDialog.dismiss()
         }
     }
 
+    private fun HandleRoleDialog() {
+        binding.logInSignUpLink.setOnClickListener {
+            val view = LayoutInflater.from(context).inflate(R.layout.role_dialoug, null)
+            val dialog = AlertDialog.Builder(context).setView(view).create()
+            dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+            dialog.setCancelable(false)
+            dialog.show()
 
-    private fun HandleRoleDialoug() {
-        binding.apply {
-            logInSignUpLink.setOnClickListener {
-                val view = LayoutInflater.from(context).inflate(R.layout.role_dialoug, null)
-                val dialog = AlertDialog.Builder(context).setView(view).create()
-                dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-                dialog.setCancelable(false)
-                dialog.show()
-                val retailerBtn = view.findViewById<MaterialButton>(R.id.btnRetailer)
-                val customerBtn = view.findViewById<MaterialButton>(R.id.btnCustomer)
-
-                retailerBtn.setOnClickListener {
-                    findNavController().navigate(R.id.action_logIn_to_signUpRetailer)
-                    dialog.dismiss()
-                }
-                customerBtn.setOnClickListener {
-                    findNavController().navigate(R.id.action_logIn_to_signUpCustomer)
-                    dialog.dismiss()
-                }
+            view.findViewById<MaterialButton>(R.id.btnRetailer).setOnClickListener {
+                findNavController().navigate(R.id.action_logIn_to_signUpRetailer)
+                dialog.dismiss()
+            }
+            view.findViewById<MaterialButton>(R.id.btnCustomer).setOnClickListener {
+                findNavController().navigate(R.id.action_logIn_to_signUpCustomer)
+                dialog.dismiss()
             }
         }
     }

@@ -5,8 +5,7 @@ data class RetailerItemDataClass(
     var itemName: String? = null,
     var price: Double? = null,
     var deliveryPrice: Double? = null,
-    var quantity: String? = null, // Change to String? to match Firestore
+    var quantity: String? = null, // Kept as String? to match input and display
     var totalPrice: Double? = null,
-    var unit: String? = null, // Change from itemUnit to unit to match Firestore
-    var imageBase64: String? = null
+    var unit: String? = null
 )

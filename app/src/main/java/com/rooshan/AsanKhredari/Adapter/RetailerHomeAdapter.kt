@@ -1,51 +1,32 @@
 package com.rooshan.AsanKhredari.Adapter
 
-import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.net.Uri
-import android.util.Base64
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.EditText
-import android.widget.ImageView
-import android.widget.PopupMenu
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.database.*
 import com.rooshan.AsanKhredari.DataClass.RetailerItemDataClass
 import com.rooshan.AsanKhredari.R
-import java.io.ByteArrayOutputStream
-import kotlin.collections.getOrNull
 
-class RetailerHomeAdapter(private val context: Context, private var dataList: MutableList<RetailerItemDataClass>) :
-    RecyclerView.Adapter<RetailerHomeAdapter.ViewHolderClass>() {
-    private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
+class RetailerHomeAdapter(
+    private val context: Context,
+    private var dataList: MutableList<RetailerItemDataClass>
+) : RecyclerView.Adapter<RetailerHomeAdapter.ViewHolderClass>() {
+
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val database: FirebaseDatabase = FirebaseDatabase.getInstance()
     private val progressDialog by lazy { createProgressDialog() }
-
-    interface ImagePickerCallback {
-        fun pickImageForUpdate(onImagePicked: (Uri?) -> Unit)
-    }
 
     private fun createProgressDialog(): Dialog = Dialog(context).apply {
         setContentView(R.layout.progress_dialoug)
         setCancelable(false)
-    }
-
-    private var imagePickerCallback: ImagePickerCallback? = null
-
-    fun setImagePickerCallback(callback: ImagePickerCallback) {
-        this.imagePickerCallback = callback
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolderClass {
@@ -56,17 +37,6 @@ class RetailerHomeAdapter(private val context: Context, private var dataList: Mu
 
     override fun onBindViewHolder(holder: ViewHolderClass, position: Int) {
         val currentItem = dataList.getOrNull(position) ?: return
-        currentItem.imageBase64?.let { base64String ->
-            try {
-                val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
-                val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-                holder.img.setImageBitmap(bitmap)
-            } catch (e: Exception) {
-                Log.e("Adapter", "Error decoding image for item ${currentItem.id}: ${e.message}", e)
-                holder.img.setImageResource(android.R.drawable.ic_menu_camera)
-            }
-        } ?: holder.img.setImageResource(android.R.drawable.ic_menu_camera)
-
         holder.name.text = currentItem.itemName ?: "N/A"
         holder.price.text = currentItem.price?.toString() ?: "N/A"
         holder.deliveryPrice.text = currentItem.deliveryPrice?.toString() ?: "N/A"
@@ -87,12 +57,10 @@ class RetailerHomeAdapter(private val context: Context, private var dataList: Mu
                     UpdateRecord(data, position)
                     true
                 }
-
                 R.id.menuDelete -> {
                     DeleteRecord(data, position)
                     true
                 }
-
                 else -> false
             }
         }
@@ -111,10 +79,13 @@ class RetailerHomeAdapter(private val context: Context, private var dataList: Mu
             setPositiveButton("Delete") { _, _ ->
                 progressDialog.show()
                 Toast.makeText(context, "Deleting...", Toast.LENGTH_SHORT).show()
+
                 data.id?.let { id ->
-                    db.collection("Retailer").document(auth.uid.toString()).collection("items")
-                        .document(id)
-                        .delete()
+                    database.reference.child("Retailers")
+                        .child(auth.uid.toString())
+                        .child("items")
+                        .child(id)
+                        .removeValue()
                         .addOnSuccessListener {
                             if (position >= 0 && position < dataList.size) {
                                 dataList.removeAt(position)
@@ -124,24 +95,13 @@ class RetailerHomeAdapter(private val context: Context, private var dataList: Mu
                                 Toast.makeText(context, "Item Deleted", Toast.LENGTH_SHORT).show()
                             } else {
                                 progressDialog.dismiss()
-                                Log.w(
-                                    "Adapter",
-                                    "Invalid position $position for deletion, list size: ${dataList.size}"
-                                )
-                                Toast.makeText(
-                                    context,
-                                    "Item deleted but UI not updated",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                Log.w("Adapter", "Invalid position $position for deletion")
+                                Toast.makeText(context, "Item deleted but UI not updated", Toast.LENGTH_SHORT).show()
                             }
                         }
                         .addOnFailureListener { e ->
                             progressDialog.dismiss()
-                            Toast.makeText(
-                                context,
-                                "Error deleting: ${e.message}",
-                                Toast.LENGTH_LONG
-                            ).show()
+                            Toast.makeText(context, "Error deleting: ${e.message}", Toast.LENGTH_LONG).show()
                         }
                 } ?: Toast.makeText(context, "Item ID is missing", Toast.LENGTH_SHORT).show()
             }
@@ -150,7 +110,6 @@ class RetailerHomeAdapter(private val context: Context, private var dataList: Mu
         }
     }
 
-    @SuppressLint("MissingInflatedId")
     private fun UpdateRecord(data: RetailerItemDataClass, position: Int) {
         if (auth.currentUser == null) {
             Toast.makeText(context, "Please log in to update items", Toast.LENGTH_SHORT).show()
@@ -161,58 +120,25 @@ class RetailerHomeAdapter(private val context: Context, private var dataList: Mu
         builder.setTitle("Update Item")
         val view = LayoutInflater.from(context).inflate(R.layout.update_retailer_data_layout, null)
 
-        val updateName =
-            view.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.editItemName)
-        val updatePrice =
-            view.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.editItemPrice)
-        val updateDeliveryPrice =
-            view.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.editDeliveryPrice)
-        val updateImg = view.findViewById<ImageView>(R.id.itemImage)
-        val btnChangeImage =
-            view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnChangeImage)
-        val btnCancel =
-            view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnCancel)
+        // Initialize all views
+        val updateName = view.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.editItemName)
+        val updatePrice = view.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.editItemPrice)
+        val updateDeliveryPrice = view.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.editDeliveryPrice)
+        val btnCancel = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnCancel)
         val updateQuantity = view.findViewById<EditText>(R.id.item_quantity_input)
         val updateUnit = view.findViewById<MaterialAutoCompleteTextView>(R.id.item_unit_spinner)
-        val btnUpdateItem =
-            view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnUpdateItem)
+        val btnUpdateItem = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnUpdateItem)
+
         val units = listOf("kg", "g", "Dozen", "Liters", "Piece")
         val adapter = ArrayAdapter(context, android.R.layout.simple_dropdown_item_1line, units)
         updateUnit.setAdapter(adapter)
 
+        // Set current values
         updateName.setText(data.itemName ?: "")
         updatePrice.setText(data.price?.toString() ?: "")
         updateDeliveryPrice.setText(data.deliveryPrice?.toString() ?: "")
         updateQuantity.setText(data.quantity?.toString() ?: "")
-        updateUnit.setText(data.unit ?: "", false) // Set without triggering dropdown
-
-        data.imageBase64?.let { base64String ->
-            try {
-                val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
-                val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-                updateImg.setImageBitmap(bitmap)
-            } catch (e: Exception) {
-                Log.e("Adapter", "Error decoding image for update: ${e.message}", e)
-                updateImg.setImageResource(android.R.drawable.ic_menu_camera)
-            }
-        } ?: updateImg.setImageResource(android.R.drawable.ic_menu_camera)
-
-        var newImageBase64: String? = null
-
-        btnChangeImage.setOnClickListener {
-            imagePickerCallback?.pickImageForUpdate { uri ->
-                uri?.let {
-                    updateImg.setImageURI(it)
-                    newImageBase64 = encodeImage(it)
-                    if (newImageBase64 == null) {
-                        Toast.makeText(context, "Failed to encode new image", Toast.LENGTH_SHORT)
-                            .show()
-                    }
-                }
-            } ?: run {
-                Toast.makeText(context, "Image picker not available", Toast.LENGTH_SHORT).show()
-            }
-        }
+        updateUnit.setText(data.unit ?: "", false)
 
         builder.setView(view)
         var dialog: AlertDialog? = null
@@ -223,6 +149,7 @@ class RetailerHomeAdapter(private val context: Context, private var dataList: Mu
                 Toast.makeText(context, "Please log in to update items", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+
             val name = updateName.text.toString().trim()
             val priceText = updatePrice.text.toString().trim()
             val deliveryPriceText = updateDeliveryPrice.text.toString().trim()
@@ -240,22 +167,13 @@ class RetailerHomeAdapter(private val context: Context, private var dataList: Mu
             val quantity = quantityText.toIntOrNull()
             if (price == null || deliveryPrice == null || quantity == null) {
                 progressDialog.dismiss()
-                Toast.makeText(
-                    context,
-                    "Please enter valid numbers for price, delivery price, and quantity",
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(context, "Please enter valid numbers", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // Validate unit
             if (unit !in units) {
                 progressDialog.dismiss()
-                Toast.makeText(
-                    context,
-                    "Please select a valid unit (kg, Dozen, Liters, Piece)",
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(context, "Please select a valid unit", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -266,7 +184,7 @@ class RetailerHomeAdapter(private val context: Context, private var dataList: Mu
                 return@setOnClickListener
             }
 
-            val updates = mutableMapOf<String, Any?>(
+            val updates = hashMapOf<String, Any>(
                 "itemName" to name,
                 "price" to price,
                 "deliveryPrice" to deliveryPrice,
@@ -274,54 +192,31 @@ class RetailerHomeAdapter(private val context: Context, private var dataList: Mu
                 "unit" to unit,
                 "totalPrice" to totalPrice
             )
-            if (newImageBase64 != null) {
-                updates["imageBase64"] = newImageBase64
-            } else if (data.imageBase64 != null) {
-                updates["imageBase64"] = data.imageBase64
-            }
 
-            Log.d("Adapter", "Updating item ${data.id} with unit: $unit")
-            db.collection("Retailer").document(auth.uid.toString()).collection("items")
-                .document(data.id!!)
-                .update(updates)
+            database.reference.child("Retailers")
+                .child(auth.uid.toString())
+                .child("items")
+                .child(data.id!!)
+                .updateChildren(updates)
                 .addOnSuccessListener {
                     progressDialog.dismiss()
-                    Log.d(
-                        "Adapter",
-                        "Item updated successfully in Firestore: ${data.id}, unit: $unit"
-                    )
                     if (position >= 0 && position < dataList.size) {
-                        dataList[position] = RetailerItemDataClass(
-                            id = data.id,
+                        dataList[position] = data.copy(
                             itemName = name,
                             price = price,
                             deliveryPrice = deliveryPrice,
                             quantity = quantity.toString(),
                             unit = unit,
-                            totalPrice = totalPrice,
-                            imageBase64 = newImageBase64 ?: data.imageBase64
+                            totalPrice = totalPrice
                         )
                         notifyItemChanged(position)
                         Toast.makeText(context, "Item Updated", Toast.LENGTH_SHORT).show()
-                    } else {
-                        progressDialog.dismiss()
-                        Log.w(
-                            "Adapter",
-                            "Invalid position $position for update, list size: ${dataList.size}"
-                        )
-                        Toast.makeText(
-                            context,
-                            "Item updated in Firestore but UI not refreshed",
-                            Toast.LENGTH_SHORT
-                        ).show()
                     }
                     dialog?.dismiss()
                 }
                 .addOnFailureListener { e ->
                     progressDialog.dismiss()
-                    Log.e("Adapter", "Error updating item: ${e.message}", e)
-                    Toast.makeText(context, "Error updating: ${e.message}", Toast.LENGTH_LONG)
-                        .show()
+                    Toast.makeText(context, "Error updating: ${e.message}", Toast.LENGTH_LONG).show()
                 }
         }
 
@@ -333,27 +228,9 @@ class RetailerHomeAdapter(private val context: Context, private var dataList: Mu
         dialog.show()
     }
 
-    private fun encodeImage(uri: Uri): String? {
-        return try {
-            val inputStream = context?.contentResolver?.openInputStream(uri)
-            val bitmap = BitmapFactory.decodeStream(inputStream)
-            val baos = ByteArrayOutputStream()
-            bitmap?.compress(Bitmap.CompressFormat.JPEG, 80, baos)
-            val byteArray = baos.toByteArray()
-            Base64.encodeToString(byteArray, Base64.DEFAULT)
-        } catch (e: Exception) {
-            Log.e("Adapter", "Error encoding image from URI $uri: ${e.message}", e)
-            null
-        }
-    }
-
-    override fun getItemCount(): Int {
-        return dataList.size
-    }
-
+    override fun getItemCount(): Int = dataList.size
 
     class ViewHolderClass(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val img: ImageView = itemView.findViewById(R.id.itemImg)
         val name: TextView = itemView.findViewById(R.id.itemName)
         val price: TextView = itemView.findViewById(R.id.itemPrice)
         val deliveryPrice: TextView = itemView.findViewById(R.id.itemDeliveryPrice)

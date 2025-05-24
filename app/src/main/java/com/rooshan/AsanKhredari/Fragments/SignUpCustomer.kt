@@ -10,7 +10,7 @@ import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.database.FirebaseDatabase
 import com.rooshan.AsanKhredari.R
 import com.rooshan.AsanKhredari.databinding.FragmentSignUpCustomerBinding
 import kotlinx.coroutines.CoroutineScope
@@ -19,12 +19,12 @@ import kotlinx.coroutines.tasks.await
 
 class SignUpCustomer : Fragment() {
 
-
     private var _binding: FragmentSignUpCustomerBinding? = null
     private val binding get() = _binding!!
     private lateinit var auth: FirebaseAuth
     private lateinit var sharedPreferences: SharedPreferences
-    private lateinit var db: FirebaseFirestore
+    private lateinit var db: FirebaseDatabase
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -36,7 +36,9 @@ class SignUpCustomer : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         auth = FirebaseAuth.getInstance()
+        db = FirebaseDatabase.getInstance()
         sharedPreferences = requireContext().getSharedPreferences("MyPrefs", 0)
+
         binding.apply {
             signUpSignInLink.setOnClickListener {
                 findNavController().navigate(R.id.action_signUpCustomer_to_logIn)
@@ -58,36 +60,39 @@ class SignUpCustomer : Fragment() {
 
             lifecycleScope.launch {
                 try {
-                    auth = FirebaseAuth.getInstance()
-                    db = FirebaseFirestore.getInstance()
                     val result = auth.createUserWithEmailAndPassword(email, password).await()
                     val user = result.user
+
                     if (user != null) {
                         user.sendEmailVerification().await()
                         saveDetails()
-                        findNavController().navigate(R.id.action_signUpCustomer_to_logIn)
+                        val userId = user.uid
+
+                        val customerData = mapOf(
+                            "Username" to username,
+                            "Phone" to phone,
+                            "Email" to email
+                        )
+
+                        val roleData = mapOf(
+                            "Role" to "Customers",
+                            "UserName" to username,
+                            "Email" to email,
+                            "Phone" to phone
+                        )
+
+                        db.reference.child("Customers").child(userId).setValue(customerData).await()
+                        db.reference.child("Roles").child(userId).setValue(roleData).await()
+
+                        clearFields()
                         Toast.makeText(
                             requireContext(),
                             "Registered Successfully! Verify Email to login",
                             Toast.LENGTH_LONG
                         ).show()
-                        var userData = hashMapOf(
-                            "Username" to username,
-                            "Phone" to phone,
-                            "Email" to email
-                        )
-                        db.collection("Customers").document(user.uid).set(userData).await()
-                        db.collection("Roles").document(user.uid).set(
-                            hashMapOf(
-                                "Role" to "Customers",
-                                "UserName" to binding.signUpUserName.text.toString(),
-                                "Email" to binding.signUpEmail.text.toString(),
-                                "Phone" to binding.signUpPhone.text.toString()
-                            )
-                        ).await()
-                        clearFields()
                         findNavController().navigate(R.id.action_signUpCustomer_to_logIn)
                     }
+
                 } catch (e: Exception) {
                     Toast.makeText(
                         requireContext(),
@@ -110,7 +115,7 @@ class SignUpCustomer : Fragment() {
     }
 
     private fun CoroutineScope.saveDetails() {
-        var editor = sharedPreferences.edit()
+        val editor = sharedPreferences.edit()
         editor.putString("UserName", binding.signUpUserName.text.toString())
         editor.putString("Email", binding.signUpEmail.text.toString())
         editor.putString("Phone", binding.signUpPhone.text.toString())
