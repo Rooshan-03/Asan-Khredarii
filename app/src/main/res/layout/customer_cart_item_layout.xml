@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardImg"
+            android:layout_width="@dimen/_50sdp"
+            android:layout_height="@dimen/_50sdp"
+            android:layout_alignParentStart="true"
+            android:layout_centerInParent="true"
+            android:layout_margin="@dimen/_10sdp"
+            android:backgroundTint="@color/green"
+            app:cardCornerRadius="@dimen/_5sdp">
+
+            <ImageView
+                android:id="@+id/img"
+                android:layout_width="@dimen/_50sdp"
+                android:layout_height="@dimen/_50sdp"
+                android:backgroundTint="@color/green"
+                android:src="@drawable/app_logo" />
+        </androidx.cardview.widget.CardView>
+
+        <TextView
+            android:id="@+id/itemCartName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/_8sdp"
+            android:layout_toRightOf="@id/cardImg"
+            android:text="Item Name"
+            android:textSize="@dimen/_15sdp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/itemCartTotalPrice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/itemCartName"
+            android:layout_centerInParent="true"
+            android:layout_toRightOf="@id/cardImg"
+            android:text="Unit Price"
+            android:textColor="@color/primaryDark" />
+
+        <TextView
+            android:id="@+id/itemCartUnit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_marginStart="@dimen/_8sdp"
+            android:layout_toRightOf="@id/itemCartTotalPrice"
+            android:text="Unit" />
+
+        <LinearLayout
+            android:id="@+id/quantityControl"
+            android:layout_width="@dimen/_90sdp"
+            android:layout_height="@dimen/_30sdp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerInParent="true"
+            android:layout_marginEnd="@dimen/_10sdp"
+            android:background="@drawable/bg_btn"
+            android:orientation="horizontal">
+
+            <!-- Decrease Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDecrease"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="@dimen/_30sdp"
+                android:layout_height="match_parent"
+                android:backgroundTint="@color/white"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                app:cornerRadius="0dp"
+                app:icon="@drawable/baseline_remove_24"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconSize="@dimen/_14sdp"
+                app:iconTint="@color/black"
+                app:strokeColor="@color/primaryDark"
+                app:strokeWidth="@dimen/_1sdp" />
+
+            <!-- Quantity Display -->
+            <TextView
+                android:id="@+id/itemCartQuantity"
+                android:layout_width="@dimen/_30sdp"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="1"
+                android:textColor="@color/black"
+                android:textSize="@dimen/_12sdp" />
+
+            <!-- Increase Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnIncrease"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="@dimen/_30sdp"
+                android:layout_height="match_parent"
+                android:backgroundTint="@color/white"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                app:cornerRadius="0dp"
+                app:icon="@drawable/baseline_add_24"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconSize="@dimen/_14sdp"
+                app:iconTint="@color/black"
+                app:strokeColor="@color/primaryDark"
+                app:strokeWidth="@dimen/_1sdp" />
+        </LinearLayout>
+    </RelativeLayout>
+</androidx.cardview.widget.CardView>

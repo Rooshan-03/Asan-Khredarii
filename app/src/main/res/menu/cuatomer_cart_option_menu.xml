@@ -2,17 +2,17 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <item android:id="@+id/signOut"
-        android:title="Sign Out"
+    <item android:id="@+id/addItem"
+        android:title="Add new Item"
         />
     <item
-        android:id="@+id/deleteAccount"
-        android:title="Delete Account"
+        android:id="@+id/clearCart"
+        android:title="Clear Cart"
 
 
         />
     <item
         android:id="@+id/pendingOrders"
         android:title="Pending Orders"
-       />
+        />
 </menu>

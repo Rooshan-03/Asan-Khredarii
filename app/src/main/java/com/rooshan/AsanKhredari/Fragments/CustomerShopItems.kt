@@ -7,8 +7,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
@@ -17,7 +18,6 @@ import com.rooshan.AsanKhredari.Adapter.CustomerShopItemsAdapter
 import com.rooshan.AsanKhredari.DataClass.CustomerShopItemsDataClass
 import com.rooshan.AsanKhredari.R
 import com.rooshan.AsanKhredari.databinding.FragmentCustomerShopItemsBinding
-import kotlinx.coroutines.launch
 
 class CustomerShopItems : Fragment() {
     private var _binding: FragmentCustomerShopItemsBinding? = null
@@ -41,6 +41,7 @@ class CustomerShopItems : Fragment() {
             auth = FirebaseAuth.getInstance()
             database = FirebaseDatabase.getInstance()
             if (auth.currentUser != null) {
+                goToCart()
                 setUpDashboard()
                 setUpRecyclerView()
                 loadShopItem()
@@ -50,6 +51,13 @@ class CustomerShopItems : Fragment() {
                 Log.w("Home", "No authenticated user found")
                 Toast.makeText(context, "Please log in to view items", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    private fun goToCart() {
+        binding.cartIcon.setOnClickListener {
+            val shopId= arguments?.getString("id")
+            findNavController().navigate(R.id.action_customerShopItems_to_customerCart, bundleOf("shopId" to shopId))
         }
     }
 
@@ -82,9 +90,11 @@ class CustomerShopItems : Fragment() {
                     for (itemSnapshot in snapshot.children) {
                         try {
                             val idString = itemSnapshot.key ?: continue
-                            val itemName = itemSnapshot.child("itemName").getValue(String::class.java)
+                            val itemName =
+                                itemSnapshot.child("itemName").getValue(String::class.java)
                             val itemPrice = itemSnapshot.child("price").getValue(Double::class.java)
-                            val itemDeliveryPrice = itemSnapshot.child("deliveryPrice").getValue(Double::class.java)
+                            val itemDeliveryPrice =
+                                itemSnapshot.child("deliveryPrice").getValue(Double::class.java)
                             val quantityRaw = itemSnapshot.child("quantity").value
                             val quantity = when (quantityRaw) {
                                 is Long -> quantityRaw
@@ -92,14 +102,15 @@ class CustomerShopItems : Fragment() {
                                 else -> null
                             }
                             val unit = itemSnapshot.child("unit").getValue(String::class.java)
-                            val total = itemSnapshot.child("totalPrice").getValue(Double::class.java)
-                            val id = idString.toLongOrNull()
+                            val total =
+                                itemSnapshot.child("totalPrice").getValue(Double::class.java)
+                            val key = itemSnapshot.key ?: continue
 
                             if (itemName != null && itemPrice != null && itemDeliveryPrice != null &&
                                 quantity != null && unit != null && total != null
                             ) {
                                 dataList += CustomerShopItemsDataClass(
-                                    id = id,
+                                    key = key,
                                     itemName = itemName,
                                     price = itemPrice,
                                     deliveryPrice = itemDeliveryPrice,
@@ -108,7 +119,10 @@ class CustomerShopItems : Fragment() {
                                     unit = unit
                                 )
                             } else {
-                                Log.w("FirebaseData", "Skipping item $idString due to invalid fields")
+                                Log.w(
+                                    "FirebaseData",
+                                    "Skipping item $idString due to invalid fields"
+                                )
                             }
                         } catch (e: Exception) {
                             Log.e("RTDBError", "Error parsing item: ${itemSnapshot.key}", e)
@@ -117,15 +131,21 @@ class CustomerShopItems : Fragment() {
 
                     Log.d("FirebaseData", "dataList size after update: ${dataList.size}")
                     adapter.notifyDataSetChanged()
-                    binding.emptyStateText.visibility = if (dataList.isEmpty()) View.VISIBLE else View.GONE
-                    binding.itemsRecyclerView.visibility = if (dataList.isEmpty()) View.GONE else View.VISIBLE
+                    binding.emptyStateText.visibility =
+                        if (dataList.isEmpty()) View.VISIBLE else View.GONE
+                    binding.itemsRecyclerView.visibility =
+                        if (dataList.isEmpty()) View.GONE else View.VISIBLE
                 }
 
                 override fun onCancelled(error: DatabaseError) {
                     Log.e("RTDBError", "Failed to fetch items", error.toException())
                     binding.emptyStateText.visibility = View.VISIBLE
                     binding.itemsRecyclerView.visibility = View.GONE
-                    Toast.makeText(context, "Failed to load items: ${error.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        "Failed to load items: ${error.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             })
         } else {
@@ -136,9 +156,10 @@ class CustomerShopItems : Fragment() {
     }
 
     private fun setUpRecyclerView() {
+        val id = arguments?.getString("id")
         dataList = mutableListOf()
         recyclerView = binding.itemsRecyclerView
-        adapter = CustomerShopItemsAdapter(requireContext(), dataList)
+        adapter = CustomerShopItemsAdapter(id, requireContext(), dataList)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         recyclerView.adapter = adapter
     }

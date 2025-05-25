@@ -1,7 +1,7 @@
 package com.rooshan.AsanKhredari.DataClass
 
 data class CustomerShopItemsDataClass(
-    var id: Long? = null,
+    var key: String = "",
     var itemName: String? = null,
     var price: Double? = null,
     var deliveryPrice: Double? = null,

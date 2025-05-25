@@ -104,10 +104,22 @@
         android:id="@+id/customerShopItems"
         android:name="com.rooshan.AsanKhredari.Fragments.CustomerShopItems"
         android:label="fragment_customer_shop_items"
-        tools:layout="@layout/fragment_customer_shop_items" />
+        tools:layout="@layout/fragment_customer_shop_items" >
+        <action
+            android:id="@+id/action_customerShopItems_to_customerCart"
+            app:destination="@id/customerCart" />
+        <action
+            android:id="@+id/action_customerShopItems_to_customerHome"
+            app:destination="@id/customerHome" />
+    </fragment>
     <fragment
         android:id="@+id/customersPendingOrders"
         android:name="com.rooshan.AsanKhredari.Fragments.CustomersPendingOrders"
         android:label="fragment_customers_pending_orders"
         tools:layout="@layout/fragment_customers_pending_orders" />
+    <fragment
+        android:id="@+id/customerCart"
+        android:name="com.rooshan.AsanKhredari.Fragments.CustomerCart"
+        android:label="fragment_customer_cart"
+        tools:layout="@layout/fragment_customer_cart" />
 </navigation>

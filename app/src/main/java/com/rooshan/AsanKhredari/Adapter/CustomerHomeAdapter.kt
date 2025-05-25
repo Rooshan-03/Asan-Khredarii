@@ -1,5 +1,6 @@
 package com.rooshan.AsanKhredari.Adapter
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -39,6 +40,7 @@ class CustomerHomeAdapter(
 
     override fun getItemCount(): Int = dataList.size
 
+    @SuppressLint("NotifyDataSetChanged")
     fun updateList(newList: MutableList<CustomerHomeDataClass>) {
         dataList = newList
         notifyDataSetChanged()
