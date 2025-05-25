@@ -2,7 +2,7 @@
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="@dimen/_70sdp">
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -33,7 +33,7 @@
             android:layout_marginTop="@dimen/_8sdp"
             android:layout_toRightOf="@id/cardImg"
             android:text="Item Name"
-            android:textSize="@dimen/_15sdp"
+            android:textSize="@dimen/_12sdp"
             android:textStyle="bold" />
 
         <TextView
@@ -51,17 +51,18 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:layout_marginStart="@dimen/_8sdp"
             android:layout_toRightOf="@id/itemCartTotalPrice"
+            android:layout_below="@id/itemCartTotalPrice"
+            android:layout_marginStart="@dimen/_8sdp"
             android:text="Unit" />
 
         <LinearLayout
             android:id="@+id/quantityControl"
-            android:layout_width="@dimen/_90sdp"
+            android:layout_width="@dimen/_75sdp"
             android:layout_height="@dimen/_30sdp"
-            android:layout_alignParentEnd="true"
             android:layout_centerInParent="true"
-            android:layout_marginEnd="@dimen/_10sdp"
+            android:layout_toLeftOf="@+id/moreImg"
+            android:layout_marginEnd="@dimen/_5sdp"
             android:background="@drawable/bg_btn"
             android:orientation="horizontal">
 
@@ -69,7 +70,7 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDecrease"
                 style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="@dimen/_30sdp"
+                android:layout_width="@dimen/_25sdp"
                 android:layout_height="match_parent"
                 android:backgroundTint="@color/white"
                 android:insetLeft="0dp"
@@ -88,7 +89,7 @@
             <!-- Quantity Display -->
             <TextView
                 android:id="@+id/itemCartQuantity"
-                android:layout_width="@dimen/_30sdp"
+                android:layout_width="@dimen/_25sdp"
                 android:layout_height="match_parent"
                 android:gravity="center"
                 android:text="1"
@@ -99,7 +100,7 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnIncrease"
                 style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="@dimen/_30sdp"
+                android:layout_width="@dimen/_25sdp"
                 android:layout_height="match_parent"
                 android:backgroundTint="@color/white"
                 android:insetLeft="0dp"
@@ -115,5 +116,16 @@
                 app:strokeColor="@color/primaryDark"
                 app:strokeWidth="@dimen/_1sdp" />
         </LinearLayout>
+        <ImageView
+            android:id="@+id/moreImg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:focusable="true"
+            android:src="@drawable/baseline_more_vert_24"
+            android:layout_centerInParent="true"
+            android:layout_alignParentEnd="true"
+            android:clickable="true"
+            android:layout_marginEnd="@dimen/_10sdp"
+            />
     </RelativeLayout>
 </androidx.cardview.widget.CardView>

@@ -42,6 +42,7 @@ class CustomerShopItems : Fragment() {
             database = FirebaseDatabase.getInstance()
             if (auth.currentUser != null) {
                 goToCart()
+                gotoHomePage()
                 setUpDashboard()
                 setUpRecyclerView()
                 loadShopItem()
@@ -54,10 +55,19 @@ class CustomerShopItems : Fragment() {
         }
     }
 
+    private fun gotoHomePage() {
+        binding.backBtn.setOnClickListener {
+            findNavController().navigate(R.id.action_customerShopItems_to_customerHome)
+        }
+    }
+
+
     private fun goToCart() {
         binding.cartIcon.setOnClickListener {
-            val shopId= arguments?.getString("id")
-            findNavController().navigate(R.id.action_customerShopItems_to_customerCart, bundleOf("shopId" to shopId))
+            val shopId = arguments?.getString("id")
+            findNavController().navigate(
+                R.id.action_customerShopItems_to_customerCart, bundleOf("shopId" to shopId)
+            )
         }
     }
 
@@ -106,9 +116,7 @@ class CustomerShopItems : Fragment() {
                                 itemSnapshot.child("totalPrice").getValue(Double::class.java)
                             val key = itemSnapshot.key ?: continue
 
-                            if (itemName != null && itemPrice != null && itemDeliveryPrice != null &&
-                                quantity != null && unit != null && total != null
-                            ) {
+                            if (itemName != null && itemPrice != null && itemDeliveryPrice != null && quantity != null && unit != null && total != null) {
                                 dataList += CustomerShopItemsDataClass(
                                     key = key,
                                     itemName = itemName,
@@ -120,8 +128,7 @@ class CustomerShopItems : Fragment() {
                                 )
                             } else {
                                 Log.w(
-                                    "FirebaseData",
-                                    "Skipping item $idString due to invalid fields"
+                                    "FirebaseData", "Skipping item $idString due to invalid fields"
                                 )
                             }
                         } catch (e: Exception) {
@@ -142,9 +149,7 @@ class CustomerShopItems : Fragment() {
                     binding.emptyStateText.visibility = View.VISIBLE
                     binding.itemsRecyclerView.visibility = View.GONE
                     Toast.makeText(
-                        context,
-                        "Failed to load items: ${error.message}",
-                        Toast.LENGTH_SHORT
+                        context, "Failed to load items: ${error.message}", Toast.LENGTH_SHORT
                     ).show()
                 }
             })

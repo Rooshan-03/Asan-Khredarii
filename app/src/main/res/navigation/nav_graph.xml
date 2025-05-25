@@ -121,5 +121,9 @@
         android:id="@+id/customerCart"
         android:name="com.rooshan.AsanKhredari.Fragments.CustomerCart"
         android:label="fragment_customer_cart"
-        tools:layout="@layout/fragment_customer_cart" />
+        tools:layout="@layout/fragment_customer_cart" >
+        <action
+            android:id="@+id/action_customerCart_to_customerShopItems"
+            app:destination="@id/customerShopItems" />
+    </fragment>
 </navigation>
