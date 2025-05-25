@@ -49,7 +49,6 @@ class SignUpRetailer : Fragment() {
 
         binding.apply {
             signUpSignInLink.setOnClickListener {
-                progressDialog.show()
                 findNavController().navigate(R.id.action_signUpRetailer_to_logIn)
             }
 
@@ -90,19 +89,23 @@ class SignUpRetailer : Fragment() {
 
                 saveDetails()
                 clearAllFields()
-                Toast.makeText(
-                    requireContext(),
-                    "Registered Successfully! Verify Email to login",
-                    Toast.LENGTH_SHORT
-                ).show()
+                if (isAdded) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Registered. Verify email to sign in",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
                 findNavController().navigate(R.id.action_signUpRetailer_to_logIn)
             } catch (e: Exception) {
                 val message = when (e) {
                     is FirebaseAuthWeakPasswordException -> "Password is too weak"
                     is FirebaseAuthUserCollisionException -> "Email already in use"
-                    else -> "Error: ${e.message}"
+                    else -> "Failed to sign up"
                 }
-                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+                if (isAdded) {
+                    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+                }
             } finally {
                 progressDialog.dismiss()
             }
@@ -186,6 +189,7 @@ class SignUpRetailer : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        progressDialog.dismiss()
         _binding = null
     }
 }

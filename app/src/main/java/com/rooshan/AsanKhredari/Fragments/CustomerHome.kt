@@ -15,18 +15,15 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DataSnapshot
 import com.rooshan.AsanKhredari.Adapter.CustomerHomeAdapter
 import com.rooshan.AsanKhredari.DataClass.CustomerHomeDataClass
 import com.rooshan.AsanKhredari.R
 import com.rooshan.AsanKhredari.databinding.FragmentCustomerHomeBinding
-import com.google.android.material.textfield.TextInputEditText
-import com.google.android.material.button.MaterialButton
-import com.google.firebase.auth.EmailAuthProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -90,13 +87,12 @@ class CustomerHome : Fragment() {
         loadShopsData()
     }
 
-    // Modified to show progress bar during username fetch
     private fun fetchUserNameFromDatabase() {
         val uid = auth.currentUser?.uid
         if (uid != null && isAdded) {
             CoroutineScope(Dispatchers.Main).launch {
                 try {
-                    progressDialog.show() // Show progress bar
+                    progressDialog.show()
                     val dataSnapshot = db.getReference("Roles").child(uid).child("UserName").get().await()
                     val username = dataSnapshot.getValue(String::class.java)
                     withContext(Dispatchers.Main) {
@@ -107,14 +103,14 @@ class CustomerHome : Fragment() {
                                     putString("UserName", username)
                                 }
                             }
-                            progressDialog.dismiss() // Hide progress bar on success
+                            progressDialog.dismiss()
                         }
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
                         if (isAdded) {
                             Log.e("CustomerHome", "Failed to fetch username from DB: ${e.message}", e)
-                            progressDialog.dismiss() // Hide progress bar on failure
+                            progressDialog.dismiss()
                         }
                     }
                 }
@@ -125,7 +121,9 @@ class CustomerHome : Fragment() {
     private fun setupChangeNameDialog() {
         binding.editName.setOnClickListener {
             if (auth.currentUser == null) {
-                Toast.makeText(requireContext(), "User not authenticated", Toast.LENGTH_SHORT).show()
+                if (isAdded) {
+                    Toast.makeText(requireContext(), "Not signed in", Toast.LENGTH_SHORT).show()
+                }
                 return@setOnClickListener
             }
 
@@ -147,12 +145,14 @@ class CustomerHome : Fragment() {
                     newNameInput.error = "Enter Name"
                 } else {
                     val uid = auth.currentUser?.uid ?: run {
-                        Toast.makeText(requireContext(), "User not logged in.", Toast.LENGTH_SHORT).show()
+                        if (isAdded) {
+                            Toast.makeText(requireContext(), "Not signed in", Toast.LENGTH_SHORT).show()
+                        }
                         return@setOnClickListener
                     }
 
                     if (isAdded) {
-                        progressDialog.show() // Show progress bar
+                        progressDialog.show()
                         CoroutineScope(Dispatchers.Main).launch {
                             try {
                                 db.getReference("Roles").child(uid).child("UserName").setValue(newName).await()
@@ -164,18 +164,14 @@ class CustomerHome : Fragment() {
                                         }
                                         Toast.makeText(requireContext(), "Name updated", Toast.LENGTH_SHORT).show()
                                         dialog.dismiss()
-                                        progressDialog.dismiss() // Hide progress bar on success
+                                        progressDialog.dismiss()
                                     }
                                 }
                             } catch (e: Exception) {
                                 withContext(Dispatchers.Main) {
                                     if (isAdded) {
-                                        Toast.makeText(
-                                            requireContext(),
-                                            "Update failed: ${e.message}",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                        progressDialog.dismiss() // Hide progress bar on failure
+                                        Toast.makeText(requireContext(), "Failed to update name", Toast.LENGTH_SHORT).show()
+                                        progressDialog.dismiss()
                                     }
                                 }
                             }
@@ -200,14 +196,16 @@ class CustomerHome : Fragment() {
     @SuppressLint("NotifyDataSetChanged")
     private fun loadShopsData() {
         if (auth.currentUser == null) {
-            binding.emptyStateView.visibility = View.VISIBLE
-            binding.recyclerView.visibility = View.GONE
-            Snackbar.make(binding.root, "Please sign in to view shops", Snackbar.LENGTH_LONG).show()
+            if (isAdded) {
+                binding.emptyStateView.visibility = View.VISIBLE
+                binding.recyclerView.visibility = View.GONE
+                Toast.makeText(requireContext(), "Please sign in", Toast.LENGTH_SHORT).show()
+            }
             return
         }
 
         if (isAdded) {
-            progressDialog.show() // Show progress bar
+            progressDialog.show()
             CoroutineScope(Dispatchers.Main).launch {
                 try {
                     val dataSnapshot = db.getReference("Retailers").get().await()
@@ -234,7 +232,7 @@ class CustomerHome : Fragment() {
                                 }
                                 adapter.notifyDataSetChanged()
                             }
-                            progressDialog.dismiss() // Hide progress bar on success
+                            progressDialog.dismiss()
                         }
                     }
                 } catch (e: Exception) {
@@ -243,12 +241,8 @@ class CustomerHome : Fragment() {
                             Log.e("CustomerHome", "Failed to load shops from RTDB", e)
                             binding.emptyStateView.visibility = View.VISIBLE
                             binding.recyclerView.visibility = View.GONE
-                            Snackbar.make(
-                                binding.root,
-                                "Failed to load shops: ${e.message}",
-                                Snackbar.LENGTH_LONG
-                            ).show()
-                            progressDialog.dismiss() // Hide progress bar on failure
+                            Toast.makeText(requireContext(), "Failed to load shops", Toast.LENGTH_SHORT).show()
+                            progressDialog.dismiss()
                         }
                     }
                 }
@@ -283,7 +277,9 @@ class CustomerHome : Fragment() {
             private fun implementDeleteAccount() {
                 val currentUser = auth.currentUser
                 if (currentUser == null) {
-                    Toast.makeText(context, "No user is signed in", Toast.LENGTH_SHORT).show()
+                    if (isAdded) {
+                        Toast.makeText(context, "Not signed in", Toast.LENGTH_SHORT).show()
+                    }
                     return
                 }
 
@@ -308,19 +304,25 @@ class CustomerHome : Fragment() {
                     val password = pass.text.toString().trim()
 
                     if (emailInput.isEmpty()) {
-                        Toast.makeText(context, "Please enter your email", Toast.LENGTH_SHORT).show()
+                        if (isAdded) {
+                            Toast.makeText(context, "Enter your email", Toast.LENGTH_SHORT).show()
+                        }
                         return@setOnClickListener
                     }
                     if (password.isEmpty()) {
-                        Toast.makeText(context, "Please enter your password", Toast.LENGTH_SHORT).show()
+                        if (isAdded) {
+                            Toast.makeText(context, "Enter your password", Toast.LENGTH_SHORT).show()
+                        }
                         return@setOnClickListener
                     }
                     if (emailInput != currentUser.email) {
-                        Toast.makeText(context, "Email does not match the signed-in account", Toast.LENGTH_SHORT).show()
+                        if (isAdded) {
+                            Toast.makeText(context, "Email does not match", Toast.LENGTH_SHORT).show()
+                        }
                         return@setOnClickListener
                     }
                     if (isAdded) {
-                        progressDialog.show() // Already present
+                        progressDialog.show()
                         CoroutineScope(Dispatchers.Main).launch {
                             try {
                                 val credential = EmailAuthProvider.getCredential(emailInput, password)
@@ -330,8 +332,8 @@ class CustomerHome : Fragment() {
                                 sharedPreferences.edit { clear() }
                                 withContext(Dispatchers.Main) {
                                     if (isAdded) {
-                                        progressDialog.dismiss() // Already present
-                                        Toast.makeText(context, "Account deleted successfully", Toast.LENGTH_SHORT).show()
+                                        progressDialog.dismiss()
+                                        Toast.makeText(context, "Account deleted", Toast.LENGTH_SHORT).show()
                                         dialog.dismiss()
                                         findNavController().navigate(R.id.action_customerHome_to_logIn)
                                     }
@@ -339,13 +341,13 @@ class CustomerHome : Fragment() {
                             } catch (e: Exception) {
                                 withContext(Dispatchers.Main) {
                                     if (isAdded) {
-                                        progressDialog.dismiss() // Already present
+                                        progressDialog.dismiss()
                                         val message = when {
-                                            e.message?.contains("credential is incorrect") == true -> "Incorrect password. Please try again."
-                                            e.message?.contains("no user record") == true -> "No user found."
-                                            else -> "Error: ${e.message}"
+                                            e.message?.contains("credential is incorrect") == true -> "Incorrect password"
+                                            e.message?.contains("no user record") == true -> "No user found"
+                                            else -> "Failed to delete account"
                                         }
-                                        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             }
@@ -362,17 +364,17 @@ class CustomerHome : Fragment() {
                 builder.setCancelable(true)
                 builder.setPositiveButton("Sign Out") { dialog, _ ->
                     if (isAdded) {
-                        progressDialog.show() // Already present
+                        progressDialog.show()
                         try {
                             auth.signOut()
                             sharedPreferences.edit { clear() }
-                            progressDialog.dismiss() // Already present
-                            Toast.makeText(requireContext(), "Signed out successfully", Toast.LENGTH_SHORT).show()
+                            progressDialog.dismiss()
+                            Toast.makeText(requireContext(), "Signed out", Toast.LENGTH_SHORT).show()
                             findNavController().navigate(R.id.action_customerHome_to_logIn)
                             dialog.dismiss()
                         } catch (e: Exception) {
-                            progressDialog.dismiss() // Already present
-                            Toast.makeText(requireContext(), "Error signing out: ${e.message}", Toast.LENGTH_LONG).show()
+                            progressDialog.dismiss()
+                            Toast.makeText(requireContext(), "Failed to sign out", Toast.LENGTH_SHORT).show()
                             dialog.dismiss()
                         }
                     }
@@ -386,7 +388,7 @@ class CustomerHome : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         if (progressDialog.isShowing) {
-            progressDialog.dismiss() // Ensure progress bar is hidden when fragment is destroyed
+            progressDialog.dismiss()
         }
         _binding = null
     }

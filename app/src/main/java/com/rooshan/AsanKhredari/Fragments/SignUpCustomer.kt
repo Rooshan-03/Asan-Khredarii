@@ -1,5 +1,6 @@
 package com.rooshan.AsanKhredari.Fragments
 
+import android.app.Dialog
 import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -24,6 +25,12 @@ class SignUpCustomer : Fragment() {
     private lateinit var auth: FirebaseAuth
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var db: FirebaseDatabase
+    private val progressDialog by lazy { createProgressDialog() }
+
+    private fun createProgressDialog(): Dialog = Dialog(requireContext()).apply {
+        setContentView(R.layout.progress_dialoug)
+        setCancelable(false)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -46,6 +53,8 @@ class SignUpCustomer : Fragment() {
             signUpBtnRegister.setOnClickListener {
                 if (validateInput()) {
                     performSignUp()
+                } else {
+                    progressDialog.dismiss()
                 }
             }
         }
@@ -58,6 +67,7 @@ class SignUpCustomer : Fragment() {
             val phone = signUpPhone.text.toString()
             val password = signUpPassword.text.toString()
 
+            progressDialog.show()
             lifecycleScope.launch {
                 try {
                     val result = auth.createUserWithEmailAndPassword(email, password).await()
@@ -85,20 +95,25 @@ class SignUpCustomer : Fragment() {
                         db.reference.child("Roles").child(userId).setValue(roleData).await()
 
                         clearFields()
-                        Toast.makeText(
-                            requireContext(),
-                            "Registered Successfully! Verify Email to login",
-                            Toast.LENGTH_LONG
-                        ).show()
+                        if (isAdded) {
+                            Toast.makeText(
+                                requireContext(),
+                                "Registered. Verify email to sign in",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                        progressDialog.dismiss()
                         findNavController().navigate(R.id.action_signUpCustomer_to_logIn)
                     }
-
                 } catch (e: Exception) {
-                    Toast.makeText(
-                        requireContext(),
-                        "Sign-up failed: ${e.message}",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    if (isAdded) {
+                        Toast.makeText(
+                            requireContext(),
+                            "Failed to sign up",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    progressDialog.dismiss()
                 }
             }
         }
@@ -161,5 +176,11 @@ class SignUpCustomer : Fragment() {
             }
         }
         return isValid
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        progressDialog.dismiss()
+        _binding = null
     }
 }

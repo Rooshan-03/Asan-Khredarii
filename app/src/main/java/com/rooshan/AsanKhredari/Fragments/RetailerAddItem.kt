@@ -82,27 +82,37 @@ class RetailerAddItem : Fragment() {
         // Validate all required fields
         if (itemName.isEmpty()) {
             progressDialog.dismiss()
-            Toast.makeText(context, "Please enter item name", Toast.LENGTH_SHORT).show()
+            if (isAdded) {
+                Toast.makeText(context, "Enter item name", Toast.LENGTH_SHORT).show()
+            }
             return
         }
         if (quantityText.isEmpty()) {
             progressDialog.dismiss()
-            Toast.makeText(context, "Please enter quantity", Toast.LENGTH_SHORT).show()
+            if (isAdded) {
+                Toast.makeText(context, "Enter quantity", Toast.LENGTH_SHORT).show()
+            }
             return
         }
         if (unit.isEmpty()) {
             progressDialog.dismiss()
-            Toast.makeText(context, "Please enter unit", Toast.LENGTH_SHORT).show()
+            if (isAdded) {
+                Toast.makeText(context, "Enter unit", Toast.LENGTH_SHORT).show()
+            }
             return
         }
         if (priceText.isEmpty()) {
             progressDialog.dismiss()
-            Toast.makeText(context, "Please enter price", Toast.LENGTH_SHORT).show()
+            if (isAdded) {
+                Toast.makeText(context, "Enter price", Toast.LENGTH_SHORT).show()
+            }
             return
         }
         if (deliveryPriceText.isEmpty()) {
             progressDialog.dismiss()
-            Toast.makeText(context, "Please enter delivery price", Toast.LENGTH_SHORT).show()
+            if (isAdded) {
+                Toast.makeText(context, "Enter delivery price", Toast.LENGTH_SHORT).show()
+            }
             return
         }
 
@@ -111,23 +121,31 @@ class RetailerAddItem : Fragment() {
 
         if (price == null) {
             progressDialog.dismiss()
-            Toast.makeText(context, "Please enter a valid price", Toast.LENGTH_SHORT).show()
+            if (isAdded) {
+                Toast.makeText(context, "Invalid price", Toast.LENGTH_SHORT).show()
+            }
             return
         }
         if (deliveryPrice == null) {
             progressDialog.dismiss()
-            Toast.makeText(context, "Please enter a valid delivery price", Toast.LENGTH_SHORT).show()
+            if (isAdded) {
+                Toast.makeText(context, "Invalid delivery price", Toast.LENGTH_SHORT).show()
+            }
             return
         }
         if (quantityText <= "0") {
             progressDialog.dismiss()
-            Toast.makeText(context, "Please enter a valid quantity", Toast.LENGTH_SHORT).show()
+            if (isAdded) {
+                Toast.makeText(context, "Invalid quantity", Toast.LENGTH_SHORT).show()
+            }
             return
         }
 
         if (auth.currentUser == null) {
             progressDialog.dismiss()
-            Toast.makeText(context, "Please log in to add items", Toast.LENGTH_SHORT).show()
+            if (isAdded) {
+                Toast.makeText(context, "Please sign in", Toast.LENGTH_SHORT).show()
+            }
             return
         }
 
@@ -149,7 +167,9 @@ class RetailerAddItem : Fragment() {
                 .setValue(itemData)
                 .addOnSuccessListener {
                     Log.d("ItemData", "Item added successfully with ID: $newItemKey")
-                    Toast.makeText(context, "Item added successfully", Toast.LENGTH_SHORT).show()
+                    if (isAdded) {
+                        Toast.makeText(context, "Item added", Toast.LENGTH_SHORT).show()
+                    }
                     progressDialog.dismiss()
                     findNavController().navigate(R.id.action_retailerAddItem_to_retailerHome)
 
@@ -163,11 +183,15 @@ class RetailerAddItem : Fragment() {
                 .addOnFailureListener { e ->
                     progressDialog.dismiss()
                     Log.e("ItemData", "Error saving item: ${e.message}", e)
-                    Toast.makeText(context, "Error saving item: ${e.message}", Toast.LENGTH_LONG).show()
+                    if (isAdded) {
+                        Toast.makeText(context, "Failed to save item", Toast.LENGTH_SHORT).show()
+                    }
                 }
         } else {
             progressDialog.dismiss()
-            Toast.makeText(context, "Error generating item ID", Toast.LENGTH_SHORT).show()
+            if (isAdded) {
+                Toast.makeText(context, "Failed to generate item ID", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
