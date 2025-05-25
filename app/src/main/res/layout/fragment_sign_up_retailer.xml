@@ -47,7 +47,7 @@
                     android:gravity="center"
                     android:text="Create Retailer Account"
                     android:textColor="@color/primaryDark"
-                    android:textSize="@dimen/_24ssp"
+                    android:textSize="@dimen/_20ssp"
                     android:textStyle="bold" />
 
                 <!-- Email -->
@@ -61,11 +61,11 @@
                     app:boxCornerRadiusBottomStart="@dimen/_8sdp"
                     app:boxCornerRadiusTopEnd="@dimen/_8sdp"
                     app:boxCornerRadiusTopStart="@dimen/_8sdp"
-                    app:boxStrokeColor="@color/primaryColor"
+                    app:boxStrokeColor="@color/primaryDark"
                     app:boxStrokeWidth="@dimen/_1sdp"
                     app:boxStrokeWidthFocused="@dimen/_2sdp"
-                    app:hintTextColor="@color/primaryColor"
-                    app:startIconTint="@color/primaryColor">
+                    app:hintTextColor="@color/primaryDark"
+                    app:startIconTint="@color/primaryDark">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/signUpEmail"
@@ -87,11 +87,11 @@
                     app:boxCornerRadiusBottomStart="@dimen/_8sdp"
                     app:boxCornerRadiusTopEnd="@dimen/_8sdp"
                     app:boxCornerRadiusTopStart="@dimen/_8sdp"
-                    app:boxStrokeColor="@color/primaryColor"
+                    app:boxStrokeColor="@color/primaryDark"
                     app:boxStrokeWidth="@dimen/_1sdp"
                     app:boxStrokeWidthFocused="@dimen/_2sdp"
-                    app:hintTextColor="@color/primaryColor"
-                    app:startIconTint="@color/primaryColor">
+                    app:hintTextColor="@color/primaryDark"
+                    app:startIconTint="@color/primaryDark">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/signUpUserName"
@@ -113,11 +113,11 @@
                     app:boxCornerRadiusBottomStart="@dimen/_8sdp"
                     app:boxCornerRadiusTopEnd="@dimen/_8sdp"
                     app:boxCornerRadiusTopStart="@dimen/_8sdp"
-                    app:boxStrokeColor="@color/primaryColor"
+                    app:boxStrokeColor="@color/primaryDark"
                     app:boxStrokeWidth="@dimen/_1sdp"
                     app:boxStrokeWidthFocused="@dimen/_2sdp"
-                    app:hintTextColor="@color/primaryColor"
-                    app:startIconTint="@color/primaryColor">
+                    app:hintTextColor="@color/primaryDark"
+                    app:startIconTint="@color/primaryDark">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/signUpShopName"
@@ -139,12 +139,12 @@
                     app:boxCornerRadiusBottomStart="@dimen/_8sdp"
                     app:boxCornerRadiusTopEnd="@dimen/_8sdp"
                     app:boxCornerRadiusTopStart="@dimen/_8sdp"
-                    app:boxStrokeColor="@color/primaryColor"
+                    app:boxStrokeColor="@color/primaryDark"
                     app:boxStrokeWidth="@dimen/_1sdp"
                     app:boxStrokeWidthFocused="@dimen/_2sdp"
                     app:counterMaxLength="20"
-                    app:hintTextColor="@color/primaryColor"
-                    app:startIconTint="@color/primaryColor">
+                    app:hintTextColor="@color/primaryDark"
+                    app:startIconTint="@color/primaryDark">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/signUpShopType"
@@ -166,12 +166,12 @@
                     app:boxCornerRadiusBottomStart="@dimen/_8sdp"
                     app:boxCornerRadiusTopEnd="@dimen/_8sdp"
                     app:boxCornerRadiusTopStart="@dimen/_8sdp"
-                    app:boxStrokeColor="@color/primaryColor"
+                    app:boxStrokeColor="@color/primaryDark"
                     app:boxStrokeWidth="@dimen/_1sdp"
                     app:boxStrokeWidthFocused="@dimen/_2sdp"
                     app:counterMaxLength="25"
-                    app:hintTextColor="@color/primaryColor"
-                    app:startIconTint="@color/primaryColor">
+                    app:hintTextColor="@color/primaryDark"
+                    app:startIconTint="@color/primaryDark">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/signUpShopLocation"
@@ -193,11 +193,11 @@
                     app:boxCornerRadiusBottomStart="@dimen/_8sdp"
                     app:boxCornerRadiusTopEnd="@dimen/_8sdp"
                     app:boxCornerRadiusTopStart="@dimen/_8sdp"
-                    app:boxStrokeColor="@color/primaryColor"
+                    app:boxStrokeColor="@color/primaryDark"
                     app:boxStrokeWidth="@dimen/_1sdp"
                     app:boxStrokeWidthFocused="@dimen/_2sdp"
-                    app:hintTextColor="@color/primaryColor"
-                    app:startIconTint="@color/primaryColor">
+                    app:hintTextColor="@color/primaryDark"
+                    app:startIconTint="@color/primaryDark">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/signUpPhone"
@@ -219,13 +219,13 @@
                     app:boxCornerRadiusBottomStart="@dimen/_8sdp"
                     app:boxCornerRadiusTopEnd="@dimen/_8sdp"
                     app:boxCornerRadiusTopStart="@dimen/_8sdp"
-                    app:boxStrokeColor="@color/primaryColor"
+                    app:boxStrokeColor="@color/primaryDark"
                     app:boxStrokeWidth="@dimen/_1sdp"
                     app:boxStrokeWidthFocused="@dimen/_2sdp"
                     app:endIconMode="password_toggle"
-                    app:endIconTint="@color/primaryColor"
-                    app:hintTextColor="@color/primaryColor"
-                    app:startIconTint="@color/primaryColor">
+                    app:endIconTint="@color/primaryDark"
+                    app:hintTextColor="@color/primaryDark"
+                    app:startIconTint="@color/primaryDark">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/signUpPassword"
@@ -247,13 +247,13 @@
                     app:boxCornerRadiusBottomStart="@dimen/_8sdp"
                     app:boxCornerRadiusTopEnd="@dimen/_8sdp"
                     app:boxCornerRadiusTopStart="@dimen/_8sdp"
-                    app:boxStrokeColor="@color/primaryColor"
+                    app:boxStrokeColor="@color/primaryDark"
                     app:boxStrokeWidth="@dimen/_1sdp"
                     app:boxStrokeWidthFocused="@dimen/_2sdp"
                     app:endIconMode="password_toggle"
-                    app:endIconTint="@color/primaryColor"
-                    app:hintTextColor="@color/primaryColor"
-                    app:startIconTint="@color/primaryColor">
+                    app:endIconTint="@color/primaryDark"
+                    app:hintTextColor="@color/primaryDark"
+                    app:startIconTint="@color/primaryDark">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/signUpConfirmPassword"
@@ -271,7 +271,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/_48sdp"
                     android:layout_marginBottom="@dimen/_16sdp"
-                    android:backgroundTint="@color/primaryColor"
+                    android:backgroundTint="@color/primaryDark"
                     android:text="REGISTER"
                     android:textAllCaps="false"
                     android:textColor="@color/white"

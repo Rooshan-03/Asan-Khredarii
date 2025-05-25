@@ -90,14 +90,6 @@
                     android:layout_height="1dp"
                     android:visibility="invisible"/>
 
-                <TextView
-                    android:id="@+id/itemUnit"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="@dimen/_8sdp"
-                    android:textColor="@color/primaryDark"
-                    android:text="/lb"/>
-
                 <!-- Total Price -->
                 <TextView
                     android:id="@+id/itemTotalPrice"
@@ -138,6 +130,14 @@
                     android:textSize="@dimen/_8sdp"
                     android:textColor="@android:color/darker_gray"
                     android:text="~1lb each"/>
+                <TextView
+                    android:id="@+id/itemUnit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/_5sdp"
+                    android:textSize="@dimen/_8sdp"
+                    android:textColor="@color/primaryDark"
+                    android:text="/lb"/>
             </LinearLayout>
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>

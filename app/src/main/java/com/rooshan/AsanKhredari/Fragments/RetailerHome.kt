@@ -49,7 +49,7 @@ class RetailerHome : Fragment() {
 
     @Deprecated("Deprecated in Java")
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.option_menu, menu)
+        inflater.inflate(R.menu.retailer_option_menu, menu)
         super.onCreateOptionsMenu(menu, inflater)
     }
 
@@ -209,6 +209,9 @@ class RetailerHome : Fragment() {
                 } else {
                     findNavController().navigate(R.id.action_retailerHome_to_retailerAddItem)
                 }
+            }
+            R.id.pendingOrders -> {
+                findNavController().navigate(R.id.action_retailerHome_to_retailerPendingOrders)
             }
         }
         return true

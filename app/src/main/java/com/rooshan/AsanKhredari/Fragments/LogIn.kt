@@ -85,7 +85,9 @@ class LogIn : Fragment() {
 
                             val user = result.user
                             if (user == null) {
-                                Toast.makeText(requireContext(), "Authentication failed", Toast.LENGTH_SHORT).show()
+                                if (isAdded) {
+                                    Toast.makeText(requireContext(), "Failed to sign in", Toast.LENGTH_SHORT).show()
+                                }
                             } else if (user.isEmailVerified) {
                                 val snapshot = database.reference
                                     .child("Roles")
@@ -100,27 +102,37 @@ class LogIn : Fragment() {
                                             "Customers" -> R.id.action_logIn_to_customerHome
                                             "Retailer" -> R.id.action_logIn_to_retailerHome
                                             else -> {
-                                                Toast.makeText(requireContext(), "Unknown role", Toast.LENGTH_SHORT).show()
+                                                if (isAdded) {
+                                                    Toast.makeText(requireContext(), "Invalid role", Toast.LENGTH_SHORT).show()
+                                                }
                                                 null
                                             }
                                         }
                                         action?.let { findNavController().navigate(it) }
                                     } else {
-                                        Toast.makeText(requireContext(), "Role not found", Toast.LENGTH_SHORT).show()
+                                        if (isAdded) {
+                                            Toast.makeText(requireContext(), "Role not found", Toast.LENGTH_SHORT).show()
+                                        }
                                     }
                                 } else {
-                                    Toast.makeText(requireContext(), "User data not found", Toast.LENGTH_SHORT).show()
+                                    if (isAdded) {
+                                        Toast.makeText(requireContext(), "User data not found", Toast.LENGTH_SHORT).show()
+                                    }
                                 }
                             } else {
-                                Toast.makeText(requireContext(), "Please verify your email", Toast.LENGTH_SHORT).show()
-                                binding.logInEmail.error = "Verify Email"
-                                binding.logInPassword.setText("")
-                                auth.signOut()
+                                if (isAdded) {
+                                    Toast.makeText(requireContext(), "Verify your email", Toast.LENGTH_SHORT).show()
+                                    binding.logInEmail.error = "Verify Email"
+                                    binding.logInPassword.setText("")
+                                    auth.signOut()
+                                }
                             }
                         } catch (e: Exception) {
-                            Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-                            binding.logInEmail.error = e.message
-                            binding.logInPassword.setText("")
+                            if (isAdded) {
+                                Toast.makeText(requireContext(), "Failed to sign in", Toast.LENGTH_SHORT).show()
+                                binding.logInEmail.error = "Invalid credentials"
+                                binding.logInPassword.setText("")
+                            }
                         } finally {
                             logInBtnLogin.isEnabled = true
                             progressDialog.dismiss()
@@ -169,10 +181,14 @@ class LogIn : Fragment() {
                 lifecycleScope.launch {
                     try {
                         auth.sendPasswordResetEmail(email).await()
-                        Toast.makeText(context, "Email sent. Click link to reset password", Toast.LENGTH_SHORT).show()
+                        if (isAdded) {
+                            Toast.makeText(context, "Reset email sent", Toast.LENGTH_SHORT).show()
+                        }
                         alertDialog.dismiss()
                     } catch (e: Exception) {
-                        Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                        if (isAdded) {
+                            Toast.makeText(context, "Failed to send reset email", Toast.LENGTH_SHORT).show()
+                        }
                         alertDialog.dismiss()
                     } finally {
                         progressDialog.dismiss()
@@ -208,6 +224,7 @@ class LogIn : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        progressDialog.dismiss()
         _binding = null
     }
 }

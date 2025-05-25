@@ -85,6 +85,9 @@
         <action
             android:id="@+id/action_retailerHome_to_retailerAddItem"
             app:destination="@id/retailerAddItem" />
+        <action
+            android:id="@+id/action_retailerHome_to_retailerPendingOrders"
+            app:destination="@id/retailerPendingOrders" />
     </fragment>
     <fragment
         android:id="@+id/retailerAddItem"
@@ -126,4 +129,9 @@
             android:id="@+id/action_customerCart_to_customerShopItems"
             app:destination="@id/customerShopItems" />
     </fragment>
+    <fragment
+        android:id="@+id/retailerPendingOrders"
+        android:name="com.rooshan.AsanKhredari.Fragments.RetailerPendingOrders"
+        android:label="fragment_retailer_pending_orders"
+        tools:layout="@layout/fragment_retailer_pending_orders" />
 </navigation>
