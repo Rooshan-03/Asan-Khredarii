@@ -58,5 +58,4 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     implementation(libs.android.sdp)
     implementation(libs.android.ssp)
-
 }
