@@ -12,8 +12,12 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
+import androidx.core.view.GravityCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -40,7 +44,6 @@ class RetailerHome : Fragment() {
     private lateinit var db: FirebaseDatabase
     private lateinit var sharedPreferences: SharedPreferences
     private val progressDialog by lazy { createProgressDialog() }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         auth = FirebaseAuth.getInstance()
@@ -68,6 +71,7 @@ class RetailerHome : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.apply {
+            setUpSideDrawer()
             ChangeYourName()
             ChangeYourShopName()
 
@@ -80,8 +84,6 @@ class RetailerHome : Fragment() {
             }
             name.text = userName
             shopName.text = ShopName
-            (activity as? MainActivity)?.setSupportActionBar(toolbar)
-
             dataList = mutableListOf()
             adapter = RetailerHomeAdapter(requireContext(), dataList)
             recyclerView.layoutManager = LinearLayoutManager(requireContext())
@@ -93,6 +95,45 @@ class RetailerHome : Fragment() {
             } else {
                 Toast.makeText(context, "Please log in to view items", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    private fun setUpSideDrawer() {
+        (activity as? AppCompatActivity)?.setSupportActionBar(binding.toolbar)
+
+        val drawerLayout = binding.drawerLayout
+        val toolbar = binding.toolbar
+        sharedPreferences = requireContext().getSharedPreferences("Details", 0)
+        val shopName = sharedPreferences.getString("ShopName", null)
+        val userName = sharedPreferences.getString("UserName", null)
+
+
+        val toggle = ActionBarDrawerToggle(
+            requireActivity(), drawerLayout, toolbar, R.string.open_nav, R.string.close_nav
+        )
+        binding.drawerLayout.addDrawerListener(toggle)
+        toggle.syncState()
+        val headerView = binding.navView.getHeaderView(0)
+        val nameTextView = headerView.findViewById<TextView>(R.id.userName)
+        val shopNameTextView = headerView.findViewById<TextView>(R.id.shopName)
+        nameTextView.text = userName
+        shopNameTextView.text = shopName
+        binding.navView.setNavigationItemSelectedListener {
+            when (it.itemId) {
+                R.id.nav_home -> {
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                }
+
+                R.id.nav_profile -> {
+                    findNavController().navigate(R.id.action_retailerHome_to_retailerProfile)
+                }
+
+                R.id.nav_logout -> {
+                    implementSignOut()
+                }
+            }
+            drawerLayout.closeDrawer(GravityCompat.START)
+            true
         }
     }
 
@@ -173,11 +214,14 @@ class RetailerHome : Fragment() {
                         }
                         .addOnFailureListener { e ->
                             Toast.makeText(
-                                context, "Error updating shop name: ${e.message}", Toast.LENGTH_SHORT
+                                context,
+                                "Error updating shop name: ${e.message}",
+                                Toast.LENGTH_SHORT
                             ).show()
                         }
                 } else {
-                    Toast.makeText(context, "Please enter a valid shop name", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Please enter a valid shop name", Toast.LENGTH_SHORT)
+                        .show()
                 }
             }
             cancel.setOnClickListener {
@@ -192,9 +236,11 @@ class RetailerHome : Fragment() {
             R.id.signOut -> {
                 implementSignOut()
             }
+
             R.id.deleteAccount -> {
                 implementDeleteAccount()
             }
+
             R.id.trackRecord -> {
                 Toast.makeText(
                     context,
@@ -203,6 +249,7 @@ class RetailerHome : Fragment() {
                 ).show()
                 findNavController().navigate(R.id.action_retailerHome_to_retailerTrackRecord)
             }
+
             R.id.addItemBtn -> {
                 if (auth.currentUser == null) {
                     findNavController().navigate(R.id.action_retailerHome_to_logIn)
@@ -210,6 +257,7 @@ class RetailerHome : Fragment() {
                     findNavController().navigate(R.id.action_retailerHome_to_retailerAddItem)
                 }
             }
+
             R.id.pendingOrders -> {
                 findNavController().navigate(R.id.action_retailerHome_to_retailerPendingOrders)
             }
@@ -230,7 +278,8 @@ class RetailerHome : Fragment() {
                     auth.signOut()
                     sharedPreferences.edit { clear() }
                     progressDialog.dismiss()
-                    Toast.makeText(requireContext(), "Signed out successfully", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Signed out successfully", Toast.LENGTH_SHORT)
+                        .show()
                     findNavController().navigate(R.id.action_retailerHome_to_logIn)
                     dialog.dismiss()
                 } catch (e: Exception) {
@@ -288,8 +337,7 @@ class RetailerHome : Fragment() {
             }
             if (emailInput != currentUser.email) {
                 Toast.makeText(
-                    context, "Email does not match the signed-in account", Toast.LENGTH_SHORT
-                    ,
+                    context, "Email does not match the signed-in account", Toast.LENGTH_SHORT,
                 ).show()
                 return@setOnClickListener
             }
@@ -341,12 +389,18 @@ class RetailerHome : Fragment() {
                     override fun onDataChange(snapshot: DataSnapshot) {
                         if (isAdded) {
                             progressDialog.dismiss()
-                            Log.d("Home", "Snapshot received, children count: ${snapshot.childrenCount}")
+                            Log.d(
+                                "Home",
+                                "Snapshot received, children count: ${snapshot.childrenCount}"
+                            )
                             dataList.clear()
                             for (document in snapshot.children) {
                                 try {
                                     // Log raw document data
-                                    Log.d("Home", "Document: ${document.key}, Data: ${document.value}")
+                                    Log.d(
+                                        "Home",
+                                        "Document: ${document.key}, Data: ${document.value}"
+                                    )
 
                                     // Handle quantity
                                     val quantityValue = document.child("quantity").value
@@ -391,12 +445,14 @@ class RetailerHome : Fragment() {
 
                                     val data = RetailerItemDataClass(
                                         id = document.key ?: "",
-                                        itemName = document.child("itemName").getValue(String::class.java) ?: "",
+                                        itemName = document.child("itemName")
+                                            .getValue(String::class.java) ?: "",
                                         price = price,
                                         deliveryPrice = deliveryPrice,
                                         quantity = quantity,
                                         totalPrice = totalPrice,
-                                        unit = document.child("unit").getValue(String::class.java) ?: ""
+                                        unit = document.child("unit").getValue(String::class.java)
+                                            ?: ""
                                     )
                                     if (data.itemName.isNullOrEmpty() || data.price == null || data.deliveryPrice == null || data.quantity == null) {
                                         Log.w(
@@ -431,7 +487,11 @@ class RetailerHome : Fragment() {
                     override fun onCancelled(error: DatabaseError) {
                         if (isAdded) {
                             progressDialog.dismiss()
-                            Log.e("Home", "Error loading items: ${error.message}", error.toException())
+                            Log.e(
+                                "Home",
+                                "Error loading items: ${error.message}",
+                                error.toException()
+                            )
                             Toast.makeText(
                                 context, "Error loading items: ${error.message}", Toast.LENGTH_SHORT
                             ).show()

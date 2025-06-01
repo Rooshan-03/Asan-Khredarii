@@ -1,0 +1,50 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/primaryColor"
+    android:padding="16dp">
+
+    <!-- Profile Image Container -->
+    <androidx.cardview.widget.CardView
+        android:layout_marginTop="@dimen/_10sdp"
+        android:id="@+id/cardImg"
+        android:layout_width="@dimen/_50sdp"
+        android:layout_height="@dimen/_50sdp"
+        app:cardCornerRadius="@dimen/_50sdp"
+        >
+    <ImageView
+        android:id="@+id/profileImage"
+        android:layout_width="@dimen/_50sdp"
+        android:layout_height="@dimen/_50sdp"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="48dp"
+        android:src="@drawable/baseline_person_24"
+        android:padding="8dp" />
+    </androidx.cardview.widget.CardView>
+    <!-- User Name -->
+    <TextView
+        android:id="@+id/userName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@id/cardImg"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="@dimen/_12sdp"
+        android:text="Username"
+        android:textColor="@color/primaryDark"
+        android:textSize="18sp"
+        android:textStyle="bold"/>
+
+    <!-- Shop Name -->
+    <TextView
+        android:id="@+id/shopName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/userName"
+        android:layout_toEndOf="@id/cardImg"
+        android:layout_marginStart="16dp"
+        android:text="Shop Name"
+        android:textColor="@color/primaryDark"
+        android:textSize="16sp"/>
+
+</RelativeLayout>
